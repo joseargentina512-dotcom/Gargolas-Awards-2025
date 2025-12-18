@@ -46,11 +46,15 @@ input{
   padding:15px;
   margin:10px;
   width:280px;
+  max-width:90vw;
   background:#1e1e2e;
   border:2px solid #505077;
   color:#b08d32;
   border-radius:12px;
+  font-size:16px;
 }
+
+input:focus{outline:none;border-color:#b08d32;box-shadow:0 0 10px rgba(176,141,50,.3)}
 
 button{
   background:linear-gradient(45deg,#9c7c19,#b08d32);
@@ -61,12 +65,13 @@ button{
   font-size:16px;
   cursor:pointer;
   transition:.3s;
+  margin:5px;
 }
 
-button:hover{transform:translateY(-3px)}
-button:disabled{opacity:.4;cursor:not-allowed}
+button:hover:not(:disabled){transform:translateY(-3px);box-shadow:0 5px 15px rgba(176,141,50,.4)}
+button:disabled{opacity:.4;cursor:not-allowed;background:#505077}
 
-.user-info{text-align:center;margin-bottom:20px}
+.user-info{text-align:center;margin-bottom:20px;font-size:18px}
 
 .terna{
   display:none;
@@ -74,28 +79,37 @@ button:disabled{opacity:.4;cursor:not-allowed}
   padding:30px;
   border-radius:20px;
   animation:fade .5s ease;
+  margin:10px 0;
 }
 
 .terna.activa{display:block}
+
+.terna-invotable{
+  background:linear-gradient(135deg,#1a1a2e,#2a2a3e);
+  color:#888;
+  border:2px dashed #505077;
+}
 
 @keyframes fade{
   from{opacity:0;transform:translateY(20px)}
   to{opacity:1;transform:translateY(0)}
 }
 
-.ternas-container {
-  margin: 20px 0;
-}
+.ternas-container {margin: 20px 0;}
 
 .opciones{
   display:flex;
   flex-wrap:wrap;
   gap:12px;
   margin-top:20px;
+  min-height:120px;
+  align-items:center;
+  justify-content:center;
 }
 
 .opcion{
   flex:1 1 180px;
+  max-width:200px;
   padding:18px;
   background:#3a3a5a;
   border-radius:15px;
@@ -103,20 +117,30 @@ button:disabled{opacity:.4;cursor:not-allowed}
   cursor:pointer;
   text-align:center;
   transition:.3s;
+  font-size:14px;
+  word-break:break-word;
 }
 
-.opcion:hover{border-color:#b08d32}
+.opcion:hover:not(.votado):not(.disabled){border-color:#b08d32;transform:translateY(-2px)}
 
 .opcion.votado{
   background:linear-gradient(45deg,#9c7c19,#b08d32);
   color:#fff;
   font-weight:bold;
+  border-color:#fff;
+}
+
+.opcion.disabled{
+  opacity:0.5;
+  cursor:not-allowed;
+  background:#2a2a3e;
 }
 
 .nav{
   display:flex;
   justify-content:space-between;
   margin-top:25px;
+  gap:10px;
 }
 
 .stats{
@@ -125,6 +149,60 @@ button:disabled{opacity:.4;cursor:not-allowed}
   padding:20px;
   border-radius:15px;
   text-align:center;
+  font-size:18px;
+}
+
+.progress-bar{
+  width:100%;
+  height:8px;
+  background:#2a2a3e;
+  border-radius:4px;
+  overflow:hidden;
+  margin:10px 0;
+}
+
+.progress-fill{
+  height:100%;
+  background:linear-gradient(90deg,#9c7c19,#b08d32);
+  transition:width 0.3s ease;
+  border-radius:4px;
+}
+
+.completado{
+  background:linear-gradient(135deg,#4CAF50,#45a049);
+  color:#fff;
+  padding:30px;
+  text-align:center;
+  border-radius:20px;
+  animation:fade 0.8s ease;
+}
+
+.error-msg{
+  background:#ff4444;
+  color:white;
+  padding:15px;
+  border-radius:10px;
+  margin:10px 0;
+  text-align:center;
+  display:none;
+}
+
+.success-msg{
+  background:#4CAF50;
+  color:white;
+  padding:15px;
+  border-radius:10px;
+  margin:10px 0;
+  text-align:center;
+  display:none;
+}
+
+@media (max-width: 768px) {
+  .container{padding:15px}
+  input{width:90vw;max-width:300px}
+  .opcion{flex:1 1 100%;max-width:100%;padding:15px;font-size:16px}
+  .nav{flex-direction:column}
+  .nav button{width:100%}
 }
 </style>
 </head>
@@ -134,209 +212,437 @@ button:disabled{opacity:.4;cursor:not-allowed}
   <h1>🏆 GARGOLAS AWARDS 2025 🏆</h1>
   <p class="subtitle">Votación oficial — Gargolas 2025</p>
 
+  <div id="error-msg" class="error-msg"></div>
+  <div id="success-msg" class="success-msg"></div>
+
   <div id="registro" class="registro">
     <h2>Registro</h2>
-    <input id="nombre" placeholder="Nombre o nick">
-    <input id="email" placeholder="Email">
-    <button onclick="registrar()">Comenzar</button>
+    <input id="nombre" placeholder="Nombre o nick" maxlength="50">
+    <input id="email" placeholder="Email válido (ej: usuario@dominio.com)" maxlength="100" type="email">
+    <br>
+    <button onclick="registrar()">🚀 Comenzar Votación</button>
   </div>
 
   <div id="votacion" class="hidden">
-    <div class="user-info">Hola <strong><span id="usuario"></span></strong></div>
+    <div class="user-info">
+      Hola <strong><span id="usuario"></span></strong> 
+      <span id="timestamp" style="font-size:14px;color:#888"></span>
+    </div>
 
-    <!-- TERNAS CONTAINER -->
+    <div class="progress-bar">
+      <div id="progress-fill" class="progress-fill" style="width:0%"></div>
+    </div>
+    <div class="stats">
+      Votos completados: <span id="total">0</span> / <span id="total-ternas">0</span> ternas
+    </div>
+
     <div class="ternas-container" id="ternas-container"></div>
 
-    <!-- NAVEGACIÓN -->
     <div class="nav">
       <button id="volver" disabled>⬅ Volver</button>
       <button id="siguiente" disabled>Siguiente ➡</button>
     </div>
 
-    <div class="stats">
-      Total de votos: <span id="total">0</span> / <span id="total-ternas">0</span>
+    <div id="completado" class="completado hidden">
+      <h2>🎉 ¡Votación Completada!</h2>
+      <p>Gracias <strong id="usuario-completado"></strong> por participar en los Gárgolas Awards 2025.</p>
+      <p>Tus votos han sido registrados exitosamente en Firestore.</p>
+      <button onclick="reiniciarVotacion()" style="font-size:20px;padding:20px 40px">🔄 Nueva Votación</button>
     </div>
   </div>
 </div>
 
-<script>
-  // Datos de las ternas
-  const ternasData = [
-    {titulo: "MODS DEL AÑO 👊", opciones: ["BENJAMIN142420","GERO","BRUNO","LEORAIA","MATEAKD"]},
-    {titulo: "MEJOR VIEWER DEL AÑO 🔜", opciones: ["BENJAMIN142420","BRUNO","GERO","ENZO","JOACO"]},
-    {titulo: "VIEWER REVELACIÓN 🔥", opciones: ["VILLAFANEXO","ENZO","TAMPA","ENZITOGOD","MACCI"]},
-    {titulo: "MOD REVELACIÓN 💣", opciones: ["BRUNO","ENZO","JOACO","AGRUCK","LEORAIA"]},
-    {titulo: "MEJOR JUGADOR DE HAXBALL ⚽", opciones: ["RF","ZEIKO","SANGU","ABION"]},
-    {titulo: "MEJOR GK DE HAXBALL 🧤", opciones: ["TELLO","NOAH","FRANCHU","GIANKISI","ZEIKO"]},
-    {titulo: "PEOR JUGADOR DE HAXBALL 💩", opciones: ["BENJAMIN142420","LAMINE","COMECARNE","PALERMO","MACCI"]},
-    {titulo: "TOP WATCHTIME ⏰", opciones: ["BENJAMIN142420","GERO","BRUNO","JOAKO","ENZO"]},
-    {titulo: "MEJOR STREAMER DE LA COMUNIDAD 🟢", opciones: ["FACU","IRIONDO","TORO FUTBOL","AGRUCK","SANTI","GRIZAS","NATABENITEZZZ"]},
-    {titulo: "MEJOR EDITOR 🖥️", opciones: ["MATE","CAMINO","FRANPRODS","LEO TALLERES","FONTANA"]},
-    {titulo: "TOP DONADORES 💸", opciones: ["NICOBARI","UBI","SANTY","MAXITO","BRUNO"]},
-    {titulo: "MEJOR ARTISTA DEL AÑO 🎙️", opciones: ["LP","NAFIELD","TOUZE","DRAKO","MATEAKD"]},
-    {titulo: "MEJOR CHATTER DEL AÑO 💬", opciones: ["JOACO","GERO","PABLITOCLIPS","ENZO","ERNESTO"]},
-    {titulo: "MEJOR CLIP 🎥", opciones: ["ND POR AHORA"]},
-    {titulo: "MEJOR PJ DEL FC 🙎", opciones: ["BRUNO GARGOLAS","BENJAMIN142420","RDC","ENZO (LOS 2)","LAMINE SALADO GÁRGOLAS","IRIONDO GARGOLAS"]},
-    {titulo: "VIEWER PROMESA DEL AÑO 💎", opciones: ["PABLITOCLIPS","ENZITOGOD","SANTY","ERNESTO","MACCI"]},
-    {titulo: "MEJOR NOMBRE DE LA COMUNIDAD 🏷️", opciones: ["SANGUCHITO","LAMINESALADO","FACUREIG","TRABUCODEURUGUAY","AGRUCK"]},
-    {titulo: "MEJOR EDIT DEL AÑO 👏", opciones: ["FRANPRODS","LEOTALLERES","NAXITORP","MATEAKD"]},
-    {titulo: "MEJOR SETUP DEL AÑO 🖥️", opciones: ["EN DUDA"]},
-    {titulo: "VIEWER MÁS FACHERO DEL AÑO 😎", opciones: ["GERO","MATEAKD"]},
-    {titulo: "MEJOR TEMA DEL AÑO 🎶", opciones: ["JOSEO NOCTURNO","WILY","TONKA","TAN MALA","COLD GÁRGOLA"]},
-    {titulo: "VIEWER MÁS PLAGA 🕷️", opciones: ["ENZO","ZEIKO","TINELPRO","NOAH","JOACO"]},
-    {titulo: "MEJOR VIP DEL AÑO 👑", opciones: ["AGUSTÍNCARP","NOAH","UBI","MACCI","LAMINESALADO"]},
-    {titulo: "VIEWER MÁS OG ☠️", opciones: ["TOUZE","FRANPRODS","NICOBARI","LUKITAS","EDAN"]},
-    {titulo: "MEJOR CLIPERO DEL AÑO 🎬", opciones: ["CLIPSZETA","MAXITO","BRUNO","MATEAKD","UBI"]},
-    {titulo: "MEJOR 9 DE HAXBALL 9️⃣", opciones: ["HAALAND"]},
-    {titulo: "MEJOR DEFENSOR DE HAXBALL 2️⃣", opciones: ["ZEIKO","JOAKO"]},
-    {titulo: "MEJOR MEDIO DE HAXBALL 8️⃣", opciones: ["LEO","TAMPA"]},
-    {titulo: "MEJOR EXTREMO DE HAXBALL 7️⃣", opciones: ["RF","SANGU"]}
-  ];
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, getDocs, updateDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
-  // Variables globales
-  let usuario = null;
-  let votos = JSON.parse(localStorage.getItem('votosGargolas') || '{}');
-  let index = 0;
-  let ternasElements = [];
+// 🔥 PEGÁ TU CONFIGURACIÓN DE FIREBASE AQUÍ
+<script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
 
-  // Elementos del DOM
-  const registro = document.getElementById('registro');
-  const votacion = document.getElementById('votacion');
-  const usuarioSpan = document.getElementById('usuario');
-  const ternasContainer = document.getElementById('ternas-container');
-  const volverBtn = document.getElementById('volver');
-  const siguienteBtn = document.getElementById('siguiente');
-  const totalSpan = document.getElementById('total');
-  const totalTernasSpan = document.getElementById('total-ternas');
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyABUYYIU42RnSYxGL5hU4EMcvnIQ80Ycmk",
+    authDomain: "gargolas-awards-2025.firebaseapp.com",
+    projectId: "gargolas-awards-2025",
+    storageBucket: "gargolas-awards-2025.firebasestorage.app",
+    messagingSenderId: "50729106362",
+    appId: "1:50729106362:web:52c2dbc0f953a27c157b83",
+    measurementId: "G-WZQYR1EQ2Q"
+  };
 
-  // Inicializar
-  function init() {
-    generarTernas();
-    actualizarNavegacion();
-    totalTernasSpan.textContent = ternasData.length;
-    
-    // Cargar usuario guardado
-    const savedUser = localStorage.getItem('usuarioG');
-    if (savedUser) {
-      usuario = JSON.parse(savedUser);
-      usuarioSpan.textContent = usuario.nombre;
-      registro.classList.add('hidden');
-      votacion.classList.remove('hidden');
-      actualizar();
-    }
-  }
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+</script>
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-  // Generar elementos de ternas dinámicamente
-  function generarTernas() {
-    ternasData.forEach((terna, i) => {
-      const div = document.createElement('div');
-      div.className = 'terna';
-      div.dataset.categoria = i;
-      div.innerHTML = `
-        <h3>${terna.titulo}</h3>
-        <div class="opciones">
-          ${terna.opciones.map(opcion => 
-            `<div class="opcion" data-opcion="${opcion}">${opcion}</div>`
-          ).join('')}
-        </div>
-      `;
-      ternasContainer.appendChild(div);
-      ternasElements.push(div);
+const ternasData = [
+  {titulo: "MODS DEL AÑO 👊", opciones: ["BENJAMIN142420","GERO","BRUNO","LEORAIA","MATEAKD"], votable: true},
+  {titulo: "MEJOR VIEWER DEL AÑO 🔜", opciones: ["BENJAMIN142420","BRUNO","GERO","ENZO","JOACO"], votable: true},
+  {titulo: "VIEWER REVELACIÓN 🔥", opciones: ["VILLAFANEXO","ENZO","TAMPA","ENZITOGOD","MACCI"], votable: true},
+  {titulo: "MOD REVELACIÓN 💣", opciones: ["BRUNO","ENZO","JOACO","AGRUCK","LEORAIA"], votable: true},
+  {titulo: "MEJOR JUGADOR DE HAXBALL ⚽", opciones: ["RF","ZEIKO","SANGU","ABION"], votable: true},
+  {titulo: "MEJOR GK DE HAXBALL 🧤", opciones: ["TELLO","NOAH","FRANCHU","GIANKISI","ZEIKO"], votable: true},
+  {titulo: "PEOR JUGADOR DE HAXBALL 💩", opciones: ["BENJAMIN142420","LAMINE","COMECARNE","PALERMO","MACCI"], votable: true},
+  {titulo: "TOP WATCHTIME ⏰", opciones: ["BENJAMIN142420","GERO","BRUNO","JOAKO","ENZO"], votable: true},
+  {titulo: "MEJOR STREAMER DE LA COMUNIDAD 🟢", opciones: ["FACU","IRIONDO","TORO FUTBOL","AGRUCK","SANTI","GRIZAS","NATABENITEZZZ"], votable: true},
+  {titulo: "MEJOR EDITOR 🖥️", opciones: ["MATE","CAMINO","FRANPRODS","LEO TALLERES","FONTANA"], votable: true},
+  {titulo: "TOP DONADORES 💸", opciones: ["NICOBARI","UBI","SANTY","MAXITO","BRUNO"], votable: true},
+  {titulo: "MEJOR ARTISTA DEL AÑO 🎙️", opciones: ["LP","NAFIELD","TOUZE","DRAKO","MATEAKD"], votable: true},
+  {titulo: "MEJOR CHATTER DEL AÑO 💬", opciones: ["JOACO","GERO","PABLITOCLIPS","ENZO","ERNESTO"], votable: true},
+  {titulo: "MEJOR PJ DEL FC 🙎", opciones: ["BRUNO GARGOLAS","BENJAMIN142420","RDC","ENZO (LOS 2)","LAMINE SALADO GÁRGOLAS","IRIONDO GÁRGOLAS"], votable: true},
+  {titulo: "VIEWER PROMESA DEL AÑO 💎", opciones: ["PABLITOCLIPS","ENZITOGOD","SANTY","ERNESTO","MACCI"], votable: true},
+  {titulo: "MEJOR NOMBRE DE LA COMUNIDAD 🏷️", opciones: ["SANGUCHITO","LAMINESALADO","FACUREIG","TRABUCODEURUGUAY","AGRUCK"], votable: true},
+  {titulo: "MEJOR EDIT DEL AÑO 👏", opciones: ["FRANPRODS","LEOTALLERES","NAXITORP","MATEAKD"], votable: true},
+  {titulo: "VIEWER MÁS FACHERO DEL AÑO 😎", opciones: ["GERO","MATEAKD"], votable: true},
+  {titulo: "MEJOR TEMA DEL AÑO 🎶", opciones: ["JOSEO NOCTURNO","WILY","TONKA","TAN MALA","COLD GÁRGOLA"], votable: true},
+  {titulo: "VIEWER MÁS PLAGA 🕷️", opciones: ["ENZO","ZEIKO","TINELPRO","NOAH","JOACO"], votable: true},
+  {titulo: "MEJOR VIP DEL AÑO 👑", opciones: ["AGUSTÍNCARP","NOAH","UBI","MACCI","LAMINESALADO"], votable: true},
+  {titulo: "VIEWER MÁS OG ☠️", opciones: ["TOUZE","FRANPRODS","NICOBARI","LUKITAS","EDAN"], votable: true},
+  {titulo: "MEJOR CLIPERO DEL AÑO 🎬", opciones: ["CLIPSZETA","MAXITO","BRUNO","MATEAKD","UBI"], votable: true},
+  {titulo: "MEJOR DEFENSOR DE HAXBALL 2️⃣", opciones: ["ZEIKO","JOAKO"], votable: true},
+  {titulo: "MEJOR MEDIO DE HAXBALL 8️⃣", opciones: ["LEO","TAMPA"], votable: true},
+  {titulo: "MEJOR EXTREMO DE HAXBALL 7️⃣", opciones: ["RF","SANGU"], votable: true}
+];
+
+// Variables globales
+let usuario = null;
+let votos = {};
+let index = 0;
+let ternasElements = [];
+let unsubscribe = null;
+
+// Elementos DOM
+const elementos = {
+  registro: document.getElementById('registro'),
+  votacion: document.getElementById('votacion'),
+  usuarioSpan: document.getElementById('usuario'),
+  usuarioCompletado: document.getElementById('usuario-completado'),
+  ternasContainer: document.getElementById('ternas-container'),
+  volverBtn: document.getElementById('volver'),
+  siguienteBtn: document.getElementById('siguiente'),
+  totalSpan: document.getElementById('total'),
+  totalTernasSpan: document.getElementById('total-ternas'),
+  progressFill: document.getElementById('progress-fill'),
+  timestamp: document.getElementById('timestamp'),
+  errorMsg: document.getElementById('error-msg'),
+  successMsg: document.getElementById('success-msg'),
+  completado: document.getElementById('completado')
+};
+
+// 🔥 FIRESTORE FUNCTIONS
+async function guardarUsuario() {
+  try {
+    await setDoc(doc(db, 'usuarios', usuario.email), {
+      nombre: usuario.nombre,
+      email: usuario.email,
+      timestamp: Date.now(),
+      totalVotos: 0,
+      completado: false
     });
+  } catch(e) {
+    console.error('Error guardando usuario:', e);
   }
+}
 
-  // Registrar usuario
-  function registrar() {
-    const nombre = document.getElementById('nombre').value.trim();
-    const email = document.getElementById('email').value.trim();
-    
-    if (!nombre || !email) {
-      return alert('Completa todos los datos');
-    }
-    
-    usuario = { nombre, email };
-    localStorage.setItem('usuarioG', JSON.stringify(usuario));
-    usuarioSpan.textContent = nombre;
-    
-    registro.classList.add('hidden');
-    votacion.classList.remove('hidden');
-    actualizar();
-  }
-
-  // Actualizar vista actual
-  function actualizar() {
-    ternasElements.forEach((t, i) => {
-      t.classList.toggle('activa', i === index);
-    });
-    actualizarNavegacion();
-  }
-
-  // Clave única para voto actual
-  function claveActual() {
-    return `${usuario.email}-${index}`;
-  }
-
-  // Actualizar botones de navegación
-  function actualizarNavegacion() {
-    const haVotado = !!votos[claveActual()];
-    siguienteBtn.disabled = !haVotado || index >= ternasData.length - 1;
-    volverBtn.disabled = index === 0;
-    
-    actualizarTotalVotos();
-    
-    // Marcar voto anterior si existe
-    const votoActual = votos[claveActual()];
-    const opciones = ternasElements[index]?.querySelectorAll('.opcion');
-    if (opciones) {
-      opciones.forEach(op => {
-        op.classList.toggle('votado', op.dataset.opcion === votoActual);
+async function guardarVotos() {
+  if (!usuario) return;
+  
+  try {
+    for (const [clave, votoDataStr] of Object.entries(votos)) {
+      const votoData = typeof votoDataStr === 'string' ? JSON.parse(votoDataStr) : votoDataStr;
+      await setDoc(doc(db, 'usuarios', usuario.email, 'votos', clave), {
+        opcion: votoData.opcion,
+        timestamp: Date.now(),
+        terna: votoData.terna || ternasData[parseInt(clave.split('-')[1])]?.titulo
       });
     }
+    
+    const totalVotables = ternasData.filter(t => t.votable).length;
+    const votosCompletados = ternasData.filter((t, i) => t.votable && votos[`${usuario.email}-${i}`]).length;
+    
+    await updateDoc(doc(db, 'usuarios', usuario.email), {
+      totalVotos: votosCompletados,
+      completado: votosCompletados === totalVotables
+    });
+    
+    localStorage.setItem('votosGargolas', JSON.stringify(votos));
+  } catch(e) {
+    console.error('Error guardando votos:', e);
   }
+}
 
-  // Actualizar contador de votos
-  function actualizarTotalVotos() {
-    const votosUsuario = Object.keys(votos).filter(k => k.startsWith(usuario?.email || '')).length;
-    totalSpan.textContent = votosUsuario;
+async function cargarDatos() {
+  const savedUser = localStorage.getItem('usuarioGargolas');
+  if (!savedUser) return false;
+  
+  try {
+    usuario = JSON.parse(savedUser);
+    if (!validarUsuario(usuario)) return false;
+    
+    const userDoc = await getDoc(doc(db, 'usuarios', usuario.email));
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      if (userData.completado) {
+        mostrarError('Ya completaste tu votación');
+        return false;
+      }
+      
+      const votosCollection = collection(db, 'usuarios', usuario.email, 'votos');
+      const votosSnapshot = await getDocs(votosCollection);
+      votosSnapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        votos[docSnap.id] = JSON.stringify({
+          opcion: data.opcion,
+          timestamp: data.timestamp,
+          terna: data.terna
+        });
+      });
+    }
+    
+    return true;
+  } catch(e) {
+    console.warn('Firestore no disponible');
+    return validarUsuario(usuario);
   }
+}
 
-  // Event listeners para opciones de voto
-  ternasContainer.addEventListener('click', (e) => {
-    if (e.target.classList.contains('opcion')) {
-      const ternasActual = ternasElements[index];
-      const opciones = ternasActual.querySelectorAll('.opcion');
-      
-      // Remover votos anteriores
-      opciones.forEach(op => op.classList.remove('votado'));
-      
-      // Marcar nuevo voto
-      e.target.classList.add('votado');
-      
-      // Guardar voto
-      votos[claveActual()] = e.target.dataset.opcion;
-      localStorage.setItem('votosGargolas', JSON.stringify(votos));
-      
-      actualizarNavegacion();
+function escucharVotosRealtime() {
+  if (unsubscribe) unsubscribe();
+  unsubscribe = onSnapshot(doc(db, 'usuarios', usuario.email), (docSnap) => {
+    if (docSnap.exists()) {
+      actualizarTodo();
+    }
+  });
+}
+
+// ========== APP FUNCTIONS ==========
+function validarEmail(email) {
+  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return regex.test(email);
+}
+
+function validarUsuario(user) {
+  return user && user.nombre && user.nombre.trim() && 
+         user.email && validarEmail(user.email) && 
+         user.timestamp && (Date.now() - user.timestamp) < 7 * 24 * 60 * 60 * 1000;
+}
+
+window.registrar = async function() {
+  const nombre = document.getElementById('nombre').value.trim();
+  const email = document.getElementById('email').value.trim().toLowerCase();
+  
+  if (!nombre || nombre.length < 2 || !validarEmail(email)) {
+    mostrarError('Completa todos los datos correctamente');
+    return;
+  }
+  
+  try {
+    const docSnap = await getDoc(doc(db, 'usuarios', email));
+    if (docSnap.exists() && docSnap.data().completado) {
+      mostrarError('Ya completaste tu votación anteriormente');
+      return;
+    }
+  } catch(e) {}
+  
+  usuario = { nombre: nombre.substring(0, 50), email, timestamp: Date.now() };
+  
+  await guardarUsuario();
+  localStorage.setItem('usuarioGargolas', JSON.stringify(usuario));
+  
+  elementos.usuarioSpan.textContent = usuario.nombre;
+  elementos.usuarioCompletado.textContent = usuario.nombre;
+  elementos.timestamp.textContent = '(Hoy)';
+  
+  mostrarSeccionVotacion();
+  escucharVotosRealtime();
+  mostrarExito('¡Registro exitoso! Comienza a votar.');
+}
+
+function obtenerClaveActual() {
+  return `${usuario.email}-${index}`;
+}
+
+async function votar(opcion) {
+  if (!usuario || !ternasData[index].votable) return;
+  
+  const clave = obtenerClaveActual();
+  votos[clave] = JSON.stringify({
+    opcion,
+    timestamp: Date.now(),
+    terna: ternasData[index].titulo
+  });
+  
+  await guardarVotos();
+  localStorage.setItem('votosGargolas', JSON.stringify(votos));
+  actualizarTodo();
+  mostrarExito('¡Voto registrado!');
+}
+
+function verificarPuedeAvanzar() {
+  for (let i = 0; i <= index; i++) {
+    if (ternasData[i].votable && !votos[`${usuario.email}-${i}`]) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function generarTernas() {
+  ternasData.forEach((terna, i) => {
+    const div = document.createElement('div');
+    div.className = `terna ${!terna.votable ? 'terna-invotable' : ''}`;
+    div.dataset.categoria = i;
+    
+    const opcionesHTML = terna.votable ? 
+      terna.opciones.map(opcion => {
+        const safeOp = opcion.replace(/[<>&"']/g, c => ({
+          '<': '&lt;', '>': '&gt;', '&': '&amp;', 
+          '"': '&quot;', "'": '&#x27;'
+        })[c]);
+        return `<div class="opcion" data-opcion="${safeOp}">${opcion}</div>`;
+      }).join('') : 
+      '<div style="text-align:center;color:#888;font-style:italic">Terna no disponible para votar</div>';
+    
+    div.innerHTML = `
+      <h3>${terna.titulo}</h3>
+      <div class="opciones">${opcionesHTML}</div>
+    `;
+    
+    elementos.ternasContainer.appendChild(div);
+    ternasElements.push(div);
+  });
+}
+
+function actualizarTodo() {
+  ternasElements.forEach((t, i) => {
+    t.classList.toggle('activa', i === index);
+  });
+  
+  if (ternasElements[index]) {
+    const opciones = ternasElements[index].querySelectorAll('.opcion');
+    const votoActual = votos[obtenerClaveActual()];
+    const votoSeleccionado = votoActual ? JSON.parse(votoActual).opcion : null;
+    
+    opciones.forEach(op => {
+      op.classList.toggle('votado', op.dataset.opcion === votoSeleccionado);
+    });
+  }
+  
+  elementos.siguienteBtn.disabled = !verificarPuedeAvanzar() || index >= ternasData.length - 1;
+  elementos.volverBtn.disabled = index === 0;
+  elementos.siguienteBtn.textContent = index >= ternasData.length - 1 ? '¡Finalizar! ➡' : 'Siguiente ➡';
+  
+  actualizarProgreso();
+}
+
+function actualizarProgreso() {
+  const totalVotables = ternasData.filter(t => t.votable).length;
+  const votosCompletados = ternasData.filter((t, i) => 
+    t.votable && votos[`${usuario.email}-${i}`]
+  ).length;
+  
+  elementos.totalSpan.textContent = votosCompletados;
+  elementos.totalTernasSpan.textContent = totalVotables;
+  elementos.progressFill.style.width = totalVotables ? 
+    `${(votosCompletados / totalVotables) * 100}%` : '0%';
+  
+  if (votosCompletados === totalVotables) {
+    marcarVotacionCompleta();
+  }
+}
+
+async function marcarVotacionCompleta() {
+  await updateDoc(doc(db, 'usuarios', usuario.email), {
+    completado: true,
+    fechaCompletado: Date.now()
+  });
+  
+  elementos.votacion.querySelector('.nav').style.display = 'none';
+  elementos.completado.classList.remove('hidden');
+}
+
+function mostrarSeccionVotacion() {
+  elementos.registro.classList.add('hidden');
+  elementos.votacion.classList.remove('hidden');
+  elementos.totalTernasSpan.textContent = ternasData.filter(t => t.votable).length;
+}
+
+function mostrarError(msg) {
+  elementos.errorMsg.textContent = msg;
+  elementos.errorMsg.style.display = 'block';
+  elementos.successMsg.style.display = 'none';
+  setTimeout(() => elementos.errorMsg.style.display = 'none', 5000);
+}
+
+function mostrarExito(msg) {
+  elementos.successMsg.textContent = msg;
+  elementos.successMsg.style.display = 'block';
+  elementos.errorMsg.style.display = 'none';
+  setTimeout(() => elementos.successMsg.style.display = 'none', 3000);
+}
+
+window.reiniciarVotacion = function() {
+  if (confirm('¿Seguro que quieres reiniciar? Perderás tu progreso.')) {
+    localStorage.removeItem('usuarioGargolas');
+    localStorage.removeItem('votosGargolas');
+    location.reload();
+  }
+}
+
+function bindEventListeners() {
+  elementos.ternasContainer.addEventListener('click', async (e) => {
+    if (e.target.classList.contains('opcion') && !e.target.classList.contains('disabled')) {
+      const opcion = e.target.dataset.opcion;
+      await votar(opcion);
     }
   });
 
-  // Navegación
-  siguienteBtn.addEventListener('click', () => {
+  elementos.siguienteBtn.onclick = () => {
     if (index < ternasData.length - 1) {
       index++;
-      actualizar();
+      actualizarTodo();
     }
-  });
-
-  volverBtn.addEventListener('click', () => {
+  };
+  
+  elementos.volverBtn.onclick = () => {
     if (index > 0) {
       index--;
-      actualizar();
+      actualizarTodo();
     }
+  };
+  
+  document.getElementById('nombre').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') registrar();
   });
+  document.getElementById('email').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') registrar();
+  });
+}
 
-  // Inicializar app
-  init();
+async function init() {
+  await cargarDatos();
+  
+  if (usuario) {
+    mostrarSeccionVotacion();
+    elementos.usuarioSpan.textContent = usuario.nombre;
+    escucharVotosRealtime();
+  }
+  
+  generarTernas();
+  bindEventListeners();
+  actualizarTodo();
+}
+
+init();
 </script>
 </body>
 </html>
+
