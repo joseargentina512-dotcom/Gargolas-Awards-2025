@@ -225,16 +225,21 @@ button:disabled{opacity:.4;cursor:not-allowed;background:#505077}
 
 .cerrar-video{
   position:absolute;
-  top:-10px;
-  right:-10px;
-  background:#ff4444;
+  top:10px;
+  right:10px;
+  background:transparent;
   border:none;
-  border-radius:50%;
+  border-radius:0;
   width:30px;
   height:30px;
-  font-size:18px;
+  font-size:24px;
   cursor:pointer;
   color:#fff;
+  font-weight:bold;
+}
+
+.cerrar-video:hover {
+  color:#ff4444;
 }
 
 @media (max-width: 768px) {
@@ -293,7 +298,7 @@ button:disabled{opacity:.4;cursor:not-allowed;background:#505077}
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js';
-import { getFirestore, doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js';
+import { getFirestore, doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyABUYYIU42RnSYxGL5hU4EMcvnIQ80Ycmk",
@@ -335,12 +340,12 @@ document.addEventListener('DOMContentLoaded', function() {
     {titulo: "MEJOR GK DE HAXBALL 🧤", opciones: ["TELLO","NOAH","FRANCHU","GIANKISI","ZEIKO"], votable: true},
     {titulo: "PEOR JUGADOR DE HAXBALL 💩", opciones: ["BENJAMIN142420","LAMINE","COMECARNE","PALERMO","MACCI"], votable: true},
     {titulo: "TOP WATCHTIME ⏰", opciones: ["BENJAMIN142420","GERO","BRUNO","JOAKO","ENZO"], votable: true},
-    {titulo: "MEJOR STREAMER DE LA COMUNIDAD 🟢", opciones: ["FACU","IRIONDO","TORO FUTBOL","AGRUCK","SANTI","GRIZAS","NATABENITEZZZ"], votable: true},
+    {titulo: "MEJOR STREAMER DE LA COMUNIDAD 🟢", opciones: ["FACU IRIONDO SANTI GRIZAS","TORO FUTBOL","AGRUCK","NATABENITEZZZ"], votable: true},
     {titulo: "MEJOR EDITOR 🖥️", opciones: ["MATE","CAMINO","FRANPRODS","LEO TALLERES","FONTANA"], votable: true},
     {titulo: "TOP DONADORES 💸", opciones: ["NICOBARI","UBI","SANTY","MAXITO","BRUNO"], votable: true},
     {titulo: "MEJOR ARTISTA DEL AÑO 🎙️", opciones: ["LP","NAFIELD","TOUZE","DRAKO","MATEAKD"], votable: true},
     {titulo: "MEJOR CHATTER DEL AÑO 💬", opciones: ["JOACO","GERO","PABLITOCLIPS","ENZO","ERNESTO"], votable: true},
-    {titulo: "MEJOR PJ DEL FC 🙎", opciones: ["BRUNO GARGOLAS","BENJAMÍN142420","RDC","ENZO (LOS 2)","LAMINE SALADO GÁRGOLAS","IRIONDO GÁRGOLAS"], votable: true},
+    {titulo: "MEJOR PJ DEL FC 🙎", opciones: ["BRUNO GARGOLAS","BENJAMIN142420 DE RDC","ENZO (LOS 2)","LAMINE SALADO GÁRGOLAS","IRIONDO GÁRGOLAS"], votable: true},
     {titulo: "VIEWER PROMESA DEL AÑO 💎", opciones: ["PABLITOCLIPS","ENZITOGOD","SANTY","LAU LOPES","MACCI"], votable: true},
     {titulo: "MEJOR NOMBRE DE LA COMUNIDAD 🏷️", opciones: ["SANGUCHITO","LAMINESALADO","FACUREIG","TRABUCODEURUGUAY","AGRUCK"], votable: true},
     {titulo: "MEJOR EDIT DEL AÑO 👏", opciones: ["FRANPRODS","LEOTALLERES","NAXITORP","MATEAKD"], votable: true},
@@ -352,11 +357,11 @@ document.addEventListener('DOMContentLoaded', function() {
        "https://kick.com/maurooakd/clips?sort=view&range=day",
        "https://kick.com/macetaxeneize/clips/clip_01K0R3362B4BYX5T75RMVWXH1Q",
        "https://kick.com/agruck/clips/clip_01KC9YKTXFY1PA93F0GBTX42CT",
-       "https://www.tiktok.com/@mercenarioakd12/video/7510801513271414072",
-       "https://www.tiktok.com/@mercenarioakd12/video/7510801513271414072"
+       "https://www.tiktok.com/@mercenarioakd12/embed/v2/7510801513271414072",
+       "https://www.tiktok.com/@mercenarioakd12/embed/v2/7510801513271414072"
      ], votable: true},
-    {titulo: "VIEWER MÁS FACHERO DEL AÑO 😎", opciones: ["GERO","MATEAKD"], votable: true},
-    {titulo: "MEJOR TEMA DEL AÑO 🎶", opciones: ["JOSEO NOCTURNO","WILY","TONKA","TAN MALA","COLD GÁRGOLA"], votable: true},
+    {titulo: "VIEWER MÁS FACHERO DEL AÑO 😎", opciones: ["GERO","MATEAKD","FONTANA","SANTY"], votable: true},
+    {titulo: "MEJOR TEMA DEL AÑO 🎶", opciones: ["JOSEO NOCTURNO","WILLY","TONKA"], votable: true},
     {titulo: "VIEWER MÁS PLAGA 🕷️", opciones: ["ENZO","ZEIKO","TINELPRO","NOAH","JOACO"], votable: true},
     {titulo: "MEJOR VIP DEL AÑO 👑", opciones: ["AGUSTÍNCARP","NOAH","UBI","MACCI","LAMINESALADO"], votable: true},
     {titulo: "VIEWER MÁS OG ☠️", opciones: ["TOUZE","FRANPRODS","NICOBARI","LUKITAS","EDAN"], votable: true},
@@ -543,13 +548,17 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  // Video modal
+  // Video modal - TIKTOK CORREGIDO
   window.abrirVideo = function(url) {
     const iframe = document.getElementById('mini-video');
     let embedUrl = url;
     
-    if (url.includes("tiktok.com")) {
-      embedUrl = url.replace("www.tiktok.com", "www.tiktok.com/@").replace("/video/", "/embed/");
+    // TikTok embed correcto
+    if (url.includes("tiktok.com/video/")) {
+      const videoId = url.match(/video\/(\d+)/)[1];
+      embedUrl = `https://www.tiktok.com/@mercenarioakd12/embed/v2/${videoId}`;
+    } else if (url.includes("tiktok.com")) {
+      embedUrl = url.replace(/\/video\//, '/embed/v2/');
     }
     
     iframe.src = embedUrl;
