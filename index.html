@@ -26,7 +26,7 @@ body{
 }
 
 h1{text-align:center;margin-bottom:10px;animation:pulse 2s infinite}
-.subtitle{text-align:center;margin-bottom:30px}
+.subtitle{text-align:center;margin-bottom:30px;font-size:1.1em}
 
 @keyframes pulse{
   0%,100%{text-shadow:0 0 5px #b08d32}
@@ -119,6 +119,7 @@ button:disabled{opacity:.4;cursor:not-allowed;background:#505077}
   transition:.3s;
   font-size:14px;
   word-break:break-word;
+  user-select:none;
 }
 
 .opcion:hover:not(.votado):not(.disabled){border-color:#b08d32;transform:translateY(-2px)}
@@ -256,8 +257,8 @@ button:disabled{opacity:.4;cursor:not-allowed;background:#505077}
 
   <div id="registro" class="registro">
     <h2>Registro</h2>
-    <input id="nombre" placeholder="Nombre o nick" maxlength="50">
-    <input id="email" placeholder="Email válido (ej: usuario@dominio.com)" maxlength="100" type="email">
+    <input id="nombre" placeholder="Nombre o nick" maxlength="50" required>
+    <input id="email" placeholder="Email válido (ej: usuario@dominio.com)" maxlength="100" type="email" required>
     <br><button onclick="registrar()">🚀 Comenzar Votación</button>
   </div>
 
@@ -276,7 +277,7 @@ button:disabled{opacity:.4;cursor:not-allowed;background:#505077}
     <div id="completado" class="completado hidden">
       <h2>🎉 ¡Votación Completada!</h2>
       <p>Gracias <strong id="usuario-completado"></strong> por participar en los Gárgolas Awards 2025.</p>
-      <p>Tus votos han sido registrados exitosamente en Firestore.</p>
+      <p>Tus votos han sido registrados exitosamente.</p>
       <button onclick="reiniciarVotacion()" style="font-size:20px;padding:20px 40px">🔄 Nueva Votación</button>
     </div>
   </div>
@@ -284,15 +285,15 @@ button:disabled{opacity:.4;cursor:not-allowed;background:#505077}
   <!-- Mini reproductor -->
   <div id="video-modal" class="video-modal">
     <div class="mini-player">
-      <button class="cerrar-video" onclick="cerrarVideo()">✕</button>
+      <button class="cerrar-video" onclick="cerrarVideo()" aria-label="Cerrar video">✕</button>
       <iframe id="mini-video" frameborder="0" allowfullscreen allow="autoplay; fullscreen; picture-in-picture"></iframe>
     </div>
   </div>
 </div>
 
 <script type="module">
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
-import { getFirestore, doc, setDoc, getDoc, collection, getDocs, updateDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js';
+import { getFirestore, doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyABUYYIU42RnSYxGL5hU4EMcvnIQ80Ycmk",
@@ -307,8 +308,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-document.addEventListener('DOMContentLoaded', async function() {
-
+document.addEventListener('DOMContentLoaded', function() {
   const elementos = {
     registro: document.getElementById('registro'),
     votacion: document.getElementById('votacion'),
@@ -326,9 +326,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     completado: document.getElementById('completado')
   };
 
-  // --------------------------
-  // Tus ternas completas
-  // --------------------------
   const ternasData = [
     {titulo: "MODS DEL AÑO 👊", opciones: ["BENJAMIN142420","GERO","BRUNO","LEORAIA","MATEAKD"], votable: true},
     {titulo: "MEJOR VIEWER DEL AÑO 🔜", opciones: ["BENJAMIN142420","BRUNO","GERO","ENZO","JOACO"], votable: true},
@@ -371,176 +368,206 @@ document.addEventListener('DOMContentLoaded', async function() {
 
   elementos.totalTernasSpan.textContent = ternasData.length;
 
-  // --------------------------
-  // Variables globales
-  // --------------------------
   let usuarioActual = null;
   let votos = [];
   let indice = 0;
+  let ternasGeneradas = [];
 
-  // --------------------------
-  // Funciones
-  // --------------------------
+  // Funciones utilitarias
+  function mostrarError(msg) {
+    elementos.errorMsg.textContent = msg;
+    elementos.errorMsg.style.display = "block";
+    setTimeout(() => { elementos.errorMsg.style.display = "none"; }, 4000);
+  }
+
+  function mostrarExito(msg) {
+    elementos.successMsg.textContent = msg;
+    elementos.successMsg.style.display = "block";
+    setTimeout(() => { elementos.successMsg.style.display = "none"; }, 4000);
+  }
+
+  function validarEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  }
+
+  // Funciones globales expuestas
   window.registrar = function() {
     const nombre = document.getElementById('nombre').value.trim();
     const email = document.getElementById('email').value.trim();
 
-    if(nombre === "" || email === ""){
+    if (!nombre || !email) {
       mostrarError("Debes completar todos los campos");
       return;
     }
-    if(!email.includes("@")){
+    
+    if (!validarEmail(email)) {
       mostrarError("Ingresa un email válido");
       return;
     }
 
-    usuarioActual = {nombre,email};
+    usuarioActual = { nombre, email };
     elementos.usuarioSpan.textContent = nombre;
-    elementos.timestamp.textContent = `(${new Date().toLocaleString()})`;
+    elementos.timestamp.textContent = `(${new Date().toLocaleString('es-ES')})`;
 
     elementos.registro.classList.add('hidden');
     elementos.votacion.classList.remove('hidden');
 
     generarTernas();
     mostrarTerna(0);
-  }
+  };
 
-  function mostrarError(msg){
-    elementos.errorMsg.textContent = msg;
-    elementos.errorMsg.style.display = "block";
-    setTimeout(()=>{elementos.errorMsg.style.display="none"},4000);
-  }
-
-  function mostrarExito(msg){
-    elementos.successMsg.textContent = msg;
-    elementos.successMsg.style.display = "block";
-    setTimeout(()=>{elementos.successMsg.style.display="none"},4000);
-  }
-  function generarTernas(){
+  function generarTernas() {
     elementos.ternasContainer.innerHTML = "";
-    ternasData.forEach((terna,i)=>{
+    ternasGeneradas = [];
+    
+    ternasData.forEach((terna, i) => {
       const div = document.createElement('div');
       div.className = 'terna';
       div.id = `terna-${i}`;
 
       const h3 = document.createElement('h3');
-      h3.textContent = `${i+1}. ${terna.titulo}`;
+      h3.textContent = `${i + 1}. ${terna.titulo}`;
       div.appendChild(h3);
 
       const opcionesDiv = document.createElement('div');
       opcionesDiv.className = 'opciones';
 
-      terna.opciones.forEach((opcion,j)=>{
+      terna.opciones.forEach((opcion, j) => {
         const btn = document.createElement('div');
         btn.className = 'opcion';
         btn.textContent = opcion;
+        btn.setAttribute('role', 'button');
+        btn.setAttribute('tabindex', '0');
+        btn.setAttribute('aria-label', `Votar por ${opcion}`);
 
-        // Revisar si hay video
         const tieneVideo = terna.videos && terna.videos[j];
 
-        // Función de clic
-        btn.onclick = () => {
-          if(terna.votable){
-            votos[i] = terna.opciones[j];
-            mostrarExito(`Voto registrado: ${votos[i]}`);
+        btn.addEventListener('click', () => {
+          if (terna.votable && !btn.classList.contains('votado')) {
+            // Resetear voto anterior en esta terna
+            const opcionesActuales = document.querySelectorAll(`#terna-${i} .opcion`);
+            opcionesActuales.forEach(op => op.classList.remove('votado'));
+            
+            votos[i] = opcion;
+            btn.classList.add('votado');
+            mostrarExito(`Voto registrado: ${opcion}`);
             elementos.siguienteBtn.disabled = false;
           }
-          if(tieneVideo){
+          
+          if (tieneVideo) {
             abrirVideo(terna.videos[j]);
           }
-        };
+        });
+
+        // Soporte para teclado
+        btn.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            btn.click();
+          }
+        });
 
         opcionesDiv.appendChild(btn);
       });
 
       div.appendChild(opcionesDiv);
       elementos.ternasContainer.appendChild(div);
+      ternasGeneradas.push(div);
     });
   }
 
-  
-  function mostrarTerna(idx){
+  function mostrarTerna(idx) {
     indice = idx;
-    const todas = document.querySelectorAll('.terna');
-    todas.forEach(t => t.classList.remove('activa'));
-    const actual = document.getElementById(`terna-${idx}`);
-    if(actual) actual.classList.add('activa');
+    ternasGeneradas.forEach((t, i) => {
+      t.classList.toggle('activa', i === idx);
+    });
 
     elementos.volverBtn.disabled = idx === 0;
-    elementos.siguienteBtn.disabled = false;
+    elementos.siguienteBtn.disabled = !votos[indice];
 
     actualizarProgreso();
   }
 
-  function actualizarProgreso(){
-    elementos.totalSpan.textContent = votos.length;
-    const porcentaje = ((votos.length/ternasData.length)*100).toFixed(0);
+  function actualizarProgreso() {
+    const votosCompletos = votos.filter(v => v !== undefined).length;
+    elementos.totalSpan.textContent = votosCompletos;
+    const porcentaje = (votosCompletos / ternasData.length * 100).toFixed(0);
     elementos.progressFill.style.width = `${porcentaje}%`;
   }
 
-  function seleccionarOpcion(ternaIdx, opcionIdx){
-    votos[ternaIdx] = ternasData[ternaIdx].opciones[opcionIdx];
-    mostrarExito(`Voto registrado: ${votos[ternaIdx]}`);
-    elementos.siguienteBtn.disabled = false;
-  }
-
   elementos.siguienteBtn.onclick = () => {
-    if(indice<ternasData.length-1){
-      mostrarTerna(indice+1);
+    if (indice < ternasData.length - 1) {
+      mostrarTerna(indice + 1);
     } else {
       completarVotacion();
     }
-  }
+  };
 
   elementos.volverBtn.onclick = () => {
-    if(indice>0) mostrarTerna(indice-1);
-  }
+    if (indice > 0) mostrarTerna(indice - 1);
+  };
 
-  function completarVotacion(){
+  function completarVotacion() {
     elementos.votacion.classList.add('hidden');
     elementos.completado.classList.remove('hidden');
     elementos.usuarioCompletado.textContent = usuarioActual.nombre;
     guardarVotos();
   }
 
-  function reiniciarVotacion(){
+  window.reiniciarVotacion = function() {
     votos = [];
     indice = 0;
     elementos.completado.classList.add('hidden');
+    elementos.votacion.classList.add('hidden');
     elementos.registro.classList.remove('hidden');
-  }
+    document.getElementById('nombre').value = '';
+    document.getElementById('email').value = '';
+  };
 
-  async function guardarVotos(){
-    if(!usuarioActual) return;
-    try{
-      const ref = doc(db,"votos",usuarioActual.email);
-      await setDoc(ref,{nombre:usuarioActual.nombre,email:usuarioActual.email,votos,fecha:new Date()});
+  async function guardarVotos() {
+    if (!usuarioActual) return;
+    try {
+      const ref = doc(db, "votos", usuarioActual.email);
+      await setDoc(ref, {
+        nombre: usuarioActual.nombre,
+        email: usuarioActual.email,
+        votos,
+        fecha: new Date()
+      });
       console.log("Votos guardados correctamente");
-    } catch(err){
+      mostrarExito("¡Votos guardados exitosamente!");
+    } catch (err) {
       console.error(err);
-      mostrarError("Error guardando votos");
+      mostrarError("Error guardando votos. Intenta de nuevo.");
     }
   }
 
-  // --------------------------
   // Video modal
-  // --------------------------
-  window.abrirVideo = function(url){
+  window.abrirVideo = function(url) {
     const iframe = document.getElementById('mini-video');
-    if(url.includes("tiktok.com")){
-      iframe.src = url.replace("www.tiktok.com","www.tiktok.com/embed");
-    } else {
-      iframe.src = url;
+    let embedUrl = url;
+    
+    if (url.includes("tiktok.com")) {
+      embedUrl = url.replace("www.tiktok.com", "www.tiktok.com/@").replace("/video/", "/embed/");
     }
+    
+    iframe.src = embedUrl;
     document.getElementById('video-modal').classList.add('activo');
-  }
+  };
 
-  window.cerrarVideo = function(){
+  window.cerrarVideo = function() {
     const iframe = document.getElementById('mini-video');
     iframe.src = "";
     document.getElementById('video-modal').classList.remove('activo');
-  }
+  };
 
+  // Cerrar modal con ESC
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      cerrarVideo();
+    }
+  });
 });
 </script>
 </body>
