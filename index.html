@@ -361,11 +361,14 @@ document.addEventListener('DOMContentLoaded', function() {
        "https://www.tiktok.com/@mercenarioakd12/embed/v2/7510801513271414072"
      ], votable: true},
     {titulo: "VIEWER MÁS FACHERO DEL AÑO 😎", opciones: ["GERO","MATEAKD","FONTANA","SANTY"], votable: true},
-    {titulo: "MEJOR TEMA DEL AÑO 🎶", opciones: ["JOSEO NOCTURNO","WILY TONKA","GARGOLA","COLD], votable: true},
+    {titulo: "MEJOR TEMA DEL AÑO 🎶", opciones: ["JOSEO NOCTURNO","WILLY TONKA","GARGOLA","COLD"], votable: true},
     {titulo: "VIEWER MÁS PLAGA 🕷️", opciones: ["ENZO","ZEIKO","TINELPRO","NOAH","JOACO"], votable: true},
     {titulo: "MEJOR VIP DEL AÑO 👑", opciones: ["AGUSTÍNCARP","NOAH","UBI","MACCI","LAMINESALADO"], votable: true},
     {titulo: "VIEWER MÁS OG ☠️", opciones: ["TOUZE","FRANPRODS","NICOBARI","LUKITAS","EDAN"], votable: true},
     {titulo: "MEJOR CLIPERO DEL AÑO 🎬", opciones: ["CLIPSZETA","MAXITO","BRUNO","MATEAKD","UBI"], votable: true},
+    {titulo: "MEJOR DEFENSOR DE HAXBALL 2️⃣", opciones: ["ZEIKO","JOAKO"], votable: true},
+    {titulo: "MEJOR MEDIO DE HAXBALL 8️⃣", opciones: ["LEO","TAMPA"], votable: true},
+    {titulo: "MEJOR EXTREMO DE HAXBALL 7️⃣", opciones: ["RF","SANGU"], votable: true}
   ];
 
   elementos.totalTernasSpan.textContent = ternasData.length;
@@ -571,7 +574,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Cerrar modal con ESC
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
-      cerrarVideo();
+      window.cerrarVideo();
     }
   });
 });
