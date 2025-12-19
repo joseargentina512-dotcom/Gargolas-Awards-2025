@@ -119,7 +119,6 @@ button:disabled{opacity:.4;cursor:not-allowed;background:#505077}
   transition:.3s;
   font-size:14px;
   word-break:break-word;
-  position: relative;
 }
 
 .opcion:hover:not(.votado):not(.disabled){border-color:#b08d32;transform:translateY(-2px)}
@@ -135,16 +134,6 @@ button:disabled{opacity:.4;cursor:not-allowed;background:#505077}
   opacity:0.5;
   cursor:not-allowed;
   background:#2a2a3e;
-}
-
-.opcion.video-clip::after {
-  content: "▶";
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #b08d32;
-  font-size: 18px;
 }
 
 .nav{
@@ -208,53 +197,44 @@ button:disabled{opacity:.4;cursor:not-allowed;background:#505077}
   display:none;
 }
 
-/* Mini reproductor de video */
-.video-modal {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.9);
-  z-index: 1000;
-  justify-content: center;
-  align-items: center;
+.video-modal{
+  position:fixed;
+  top:0;left:0;width:100%;height:100%;
+  background:rgba(0,0,0,0.8);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:9999;
 }
 
-.video-modal.activo { display: flex; }
+.video-modal.activo{display:flex;}
 
-.mini-player {
-  position: relative;
-  max-width: 90vw;
-  max-height: 90vh;
-  background: #000;
-  border-radius: 15px;
-  box-shadow: 0 20px 60px rgba(176,141,50,0.5);
+.mini-player{
+  position:relative;
+  width:90%;
+  max-width:640px;
 }
 
-.mini-player iframe {
-  width: 100%;
-  height: 500px;
-  border-radius: 15px;
-  object-fit: contain;
+.mini-player iframe{
+  width:100%;
+  height:360px;
+  border:none;
+  border-radius:12px;
 }
 
-.cerrar-video {
-  position: absolute;
-  top: -50px;
-  right: 0;
-  background: #b08d32;
-  color: white;
-  border: none;
-  padding: 10px 15px;
-  border-radius: 50%;
-  cursor: pointer;
-  font-size: 18px;
-  font-weight: bold;
+.cerrar-video{
+  position:absolute;
+  top:-10px;
+  right:-10px;
+  background:#ff4444;
+  border:none;
+  border-radius:50%;
+  width:30px;
+  height:30px;
+  font-size:18px;
+  cursor:pointer;
+  color:#fff;
 }
-
-.cerrar-video:hover { background: #9c7c19; }
 
 @media (max-width: 768px) {
   .container{padding:15px}
@@ -262,12 +242,11 @@ button:disabled{opacity:.4;cursor:not-allowed;background:#505077}
   .opcion{flex:1 1 100%;max-width:100%;padding:15px;font-size:16px}
   .nav{flex-direction:column}
   .nav button{width:100%}
-  .mini-player iframe { height: 60vh; }
 }
 </style>
 </head>
-
 <body>
+
 <div class="container">
   <h1>🏆 GARGOLAS AWARDS 2025 🏆</h1>
   <p class="subtitle">Votación oficial — Gargolas 2025</p>
@@ -279,8 +258,7 @@ button:disabled{opacity:.4;cursor:not-allowed;background:#505077}
     <h2>Registro</h2>
     <input id="nombre" placeholder="Nombre o nick" maxlength="50">
     <input id="email" placeholder="Email válido (ej: usuario@dominio.com)" maxlength="100" type="email">
-    <br>
-    <button onclick="registrar()">🚀 Comenzar Votación</button>
+    <br><button onclick="registrar()">🚀 Comenzar Votación</button>
   </div>
 
   <div id="votacion" class="hidden">
@@ -288,21 +266,13 @@ button:disabled{opacity:.4;cursor:not-allowed;background:#505077}
       Hola <strong><span id="usuario"></span></strong> 
       <span id="timestamp" style="font-size:14px;color:#888"></span>
     </div>
-
-    <div class="progress-bar">
-      <div id="progress-fill" class="progress-fill" style="width:0%"></div>
-    </div>
-    <div class="stats">
-      Votos completados: <span id="total">0</span> / <span id="total-ternas">0</span> ternas
-    </div>
-
+    <div class="progress-bar"><div id="progress-fill" class="progress-fill" style="width:0%"></div></div>
+    <div class="stats">Votos completados: <span id="total">0</span> / <span id="total-ternas">0</span> ternas</div>
     <div class="ternas-container" id="ternas-container"></div>
-
     <div class="nav">
       <button id="volver" disabled>⬅ Volver</button>
       <button id="siguiente" disabled>Siguiente ➡</button>
     </div>
-
     <div id="completado" class="completado hidden">
       <h2>🎉 ¡Votación Completada!</h2>
       <p>Gracias <strong id="usuario-completado"></strong> por participar en los Gárgolas Awards 2025.</p>
@@ -311,7 +281,7 @@ button:disabled{opacity:.4;cursor:not-allowed;background:#505077}
     </div>
   </div>
 
-  <!-- Mini reproductor de video -->
+  <!-- Mini reproductor -->
   <div id="video-modal" class="video-modal">
     <div class="mini-player">
       <button class="cerrar-video" onclick="cerrarVideo()">✕</button>
@@ -322,7 +292,7 @@ button:disabled{opacity:.4;cursor:not-allowed;background:#505077}
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js';
-import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, getDocs, updateDoc } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
+import { getFirestore, doc, setDoc, getDoc, collection, getDocs, updateDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyABUYYIU42RnSYxGL5hU4EMcvnIQ80Ycmk",
@@ -337,430 +307,241 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-const ternasData = [
-  {titulo: "MODS DEL AÑO 👊", opciones: ["BENJAMIN142420","GERO","BRUNO","LEORAIA","MATEAKD"], votable: true},
-  {titulo: "MEJOR VIEWER DEL AÑO 🔜", opciones: ["BENJAMIN142420","BRUNO","GERO","ENZO","JOACO"], votable: true},
-  {titulo: "VIEWER REVELACIÓN 🔥", opciones: ["VILLAFANEXO","ENZO","TAMPA","ENZITOGOD","MACCI"], votable: true},
-  {titulo: "MOD REVELACIÓN 💣", opciones: ["BRUNO","ENZO","JOACO","AGRUCK","LEORAIA"], votable: true},
-  {titulo: "MEJOR JUGADOR DE HAXBALL ⚽", opciones: ["RF","ZEIKO","SANGU","ABION"], votable: true},
-  {titulo: "MEJOR GK DE HAXBALL 🧤", opciones: ["TELLO","NOAH","FRANCHU","GIANKISI","ZEIKO"], votable: true},
-  {titulo: "PEOR JUGADOR DE HAXBALL 💩", opciones: ["BENJAMIN142420","LAMINE","COMECARNE","PALERMO","MACCI"], votable: true},
-  {titulo: "TOP WATCHTIME ⏰", opciones: ["BENJAMIN142420","GERO","BRUNO","JOAKO","ENZO"], votable: true},
-  {titulo: "MEJOR STREAMER DE LA COMUNIDAD 🟢", opciones: ["FACU","IRIONDO","TORO FUTBOL","AGRUCK","SANTI","GRIZAS","NATABENITEZZZ"], votable: true},
-  {titulo: "MEJOR EDITOR 🖥️", opciones: ["MATE","CAMINO","FRANPRODS","LEO TALLERES","FONTANA"], votable: true},
-  {titulo: "TOP DONADORES 💸", opciones: ["NICOBARI","UBI","SANTY","MAXITO","BRUNO"], votable: true},
-  {titulo: "MEJOR ARTISTA DEL AÑO 🎙️", opciones: ["LP","NAFIELD","TOUZE","DRAKO","MATEAKD"], votable: true},
-  {titulo: "MEJOR CHATTER DEL AÑO 💬", opciones: ["JOACO","GERO","PABLITOCLIPS","ENZO","ERNESTO"], votable: true},
-  {titulo: "MEJOR PJ DEL FC 🙎", opciones: ["BRUNO GARGOLAS","BENJAMÍN142420","RDC","ENZO (LOS 2)","LAMINE SALADO GÁRGOLAS","IRIONDO GÁRGOLAS"], votable: true},
-  {titulo: "VIEWER PROMESA DEL AÑO 💎", opciones: ["PABLITOCLIPS","ENZITOGOD","SANTY","LAU LOPES","MACCI"], votable: true},
-  {titulo: "MEJOR NOMBRE DE LA COMUNIDAD 🏷️", opciones: ["SANGUCHITO","LAMINESALADO","FACUREIG","TRABUCODEURUGUAY","AGRUCK"], votable: true},
-  {titulo: "MEJOR EDIT DEL AÑO 👏", opciones: ["FRANPRODS","LEOTALLERES","NAXITORP","MATEAKD"], votable: true},
-  {titulo: "MEJOR CLIP DEL AÑO 📹", 
-   opciones: [
-     "MauroOakd #1", 
-     "Agruck #1", 
-     "MauroOakd Clips", 
-     "Macetaxeneize", 
-     "Agruck #2", 
-     "MercenarioAKD #1", 
-     "MercenarioAKD #2"
-   ], 
-   videos: [
-     "https://kick.com/maurooakd/clips/clip_01JNMS9Y68PKJ1XXHTQPP87VRQ",
-     "https://kick.com/agruck/clips/clip_01KBDVE8FAAWQ4XCVEBWPW1SCZ", 
-     "https://kick.com/maurooakd/clips?sort=view&range=day",
-     "https://kick.com/macetaxeneize/clips/clip_01K0R3362B4BYX5T75RMVWXH1Q",
-     "https://kick.com/agruck/clips/clip_01KC9YKTXFY1PA93F0GBTX42CT",
-     "https://www.tiktok.com/@mercenarioakd12/video/7510801513271414072",
-     "https://www.tiktok.com/@mercenarioakd12/video/7510801513271414072"
-   ], 
-   votable: true},
-  {titulo: "VIEWER MÁS FACHERO DEL AÑO 😎", opciones: ["GERO","MATEAKD"], votable: true},
-  {titulo: "MEJOR TEMA DEL AÑO 🎶", opciones: ["JOSEO NOCTURNO","WILY","TONKA","TAN MALA","COLD GÁRGOLA"], votable: true},
-  {titulo: "VIEWER MÁS PLAGA 🕷️", opciones: ["ENZO","ZEIKO","TINELPRO","NOAH","JOACO"], votable: true},
-  {titulo: "MEJOR VIP DEL AÑO 👑", opciones: ["AGUSTÍNCARP","NOAH","UBI","MACCI","LAMINESALADO"], votable: true},
-  {titulo: "VIEWER MÁS OG ☠️", opciones: ["TOUZE","FRANPRODS","NICOBARI","LUKITAS","EDAN"], votable: true},
-  {titulo: "MEJOR CLIPERO DEL AÑO 🎬", opciones: ["CLIPSZETA","MAXITO","BRUNO","MATEAKD","UBI"], votable: true},
-  {titulo: "MEJOR DEFENSOR DE HAXBALL 2️⃣", opciones: ["ZEIKO","JOAKO"], votable: true},
-  {titulo: "MEJOR MEDIO DE HAXBALL 8️⃣", opciones: ["LEO","TAMPA"], votable: true},
-  {titulo: "MEJOR EXTREMO DE HAXBALL 7️⃣", opciones: ["RF","SANGU"], votable: true}
-];
+document.addEventListener('DOMContentLoaded', async function() {
 
-// Variables globales
-let usuario = null;
-let votos = {};
-let index = 0;
-let ternasElements = [];
-let unsubscribe = null;
+  const elementos = {
+    registro: document.getElementById('registro'),
+    votacion: document.getElementById('votacion'),
+    usuarioSpan: document.getElementById('usuario'),
+    usuarioCompletado: document.getElementById('usuario-completado'),
+    ternasContainer: document.getElementById('ternas-container'),
+    volverBtn: document.getElementById('volver'),
+    siguienteBtn: document.getElementById('siguiente'),
+    totalSpan: document.getElementById('total'),
+    totalTernasSpan: document.getElementById('total-ternas'),
+    progressFill: document.getElementById('progress-fill'),
+    timestamp: document.getElementById('timestamp'),
+    errorMsg: document.getElementById('error-msg'),
+    successMsg: document.getElementById('success-msg'),
+    completado: document.getElementById('completado')
+  };
 
-// Elementos DOM
-const elementos = {
-  registro: document.getElementById('registro'),
-  votacion: document.getElementById('votacion'),
-  usuarioSpan: document.getElementById('usuario'),
-  usuarioCompletado: document.getElementById('usuario-completado'),
-  ternasContainer: document.getElementById('ternas-container'),
-  volverBtn: document.getElementById('volver'),
-  siguienteBtn: document.getElementById('siguiente'),
-  totalSpan: document.getElementById('total'),
-  totalTernasSpan: document.getElementById('total-ternas'),
-  progressFill: document.getElementById('progress-fill'),
-  timestamp: document.getElementById('timestamp'),
-  errorMsg: document.getElementById('error-msg'),
-  successMsg: document.getElementById('success-msg'),
-  completado: document.getElementById('completado')
-};
+  // --------------------------
+  // Tus ternas completas
+  // --------------------------
+  const ternasData = [
+    {titulo: "MODS DEL AÑO 👊", opciones: ["BENJAMIN142420","GERO","BRUNO","LEORAIA","MATEAKD"], votable: true},
+    {titulo: "MEJOR VIEWER DEL AÑO 🔜", opciones: ["BENJAMIN142420","BRUNO","GERO","ENZO","JOACO"], votable: true},
+    {titulo: "VIEWER REVELACIÓN 🔥", opciones: ["VILLAFANEXO","ENZO","TAMPA","ENZITOGOD","MACCI"], votable: true},
+    {titulo: "MOD REVELACIÓN 💣", opciones: ["BRUNO","ENZO","JOACO","AGRUCK","LEORAIA"], votable: true},
+    {titulo: "MEJOR JUGADOR DE HAXBALL ⚽", opciones: ["RF","ZEIKO","SANGU","ABION"], votable: true},
+    {titulo: "MEJOR GK DE HAXBALL 🧤", opciones: ["TELLO","NOAH","FRANCHU","GIANKISI","ZEIKO"], votable: true},
+    {titulo: "PEOR JUGADOR DE HAXBALL 💩", opciones: ["BENJAMIN142420","LAMINE","COMECARNE","PALERMO","MACCI"], votable: true},
+    {titulo: "TOP WATCHTIME ⏰", opciones: ["BENJAMIN142420","GERO","BRUNO","JOAKO","ENZO"], votable: true},
+    {titulo: "MEJOR STREAMER DE LA COMUNIDAD 🟢", opciones: ["FACU","IRIONDO","TORO FUTBOL","AGRUCK","SANTI","GRIZAS","NATABENITEZZZ"], votable: true},
+    {titulo: "MEJOR EDITOR 🖥️", opciones: ["MATE","CAMINO","FRANPRODS","LEO TALLERES","FONTANA"], votable: true},
+    {titulo: "TOP DONADORES 💸", opciones: ["NICOBARI","UBI","SANTY","MAXITO","BRUNO"], votable: true},
+    {titulo: "MEJOR ARTISTA DEL AÑO 🎙️", opciones: ["LP","NAFIELD","TOUZE","DRAKO","MATEAKD"], votable: true},
+    {titulo: "MEJOR CHATTER DEL AÑO 💬", opciones: ["JOACO","GERO","PABLITOCLIPS","ENZO","ERNESTO"], votable: true},
+    {titulo: "MEJOR PJ DEL FC 🙎", opciones: ["BRUNO GARGOLAS","BENJAMÍN142420","RDC","ENZO (LOS 2)","LAMINE SALADO GÁRGOLAS","IRIONDO GÁRGOLAS"], votable: true},
+    {titulo: "VIEWER PROMESA DEL AÑO 💎", opciones: ["PABLITOCLIPS","ENZITOGOD","SANTY","LAU LOPES","MACCI"], votable: true},
+    {titulo: "MEJOR NOMBRE DE LA COMUNIDAD 🏷️", opciones: ["SANGUCHITO","LAMINESALADO","FACUREIG","TRABUCODEURUGUAY","AGRUCK"], votable: true},
+    {titulo: "MEJOR EDIT DEL AÑO 👏", opciones: ["FRANPRODS","LEOTALLERES","NAXITORP","MATEAKD"], votable: true},
+    {titulo: "MEJOR CLIP DEL AÑO 📹", 
+     opciones: ["MauroOakd #1","Agruck #1","MauroOakd Clips","Macetaxeneize","Agruck #2","MercenarioAKD #1","MercenarioAKD #2"], 
+     videos: [
+       "https://kick.com/maurooakd/clips/clip_01JNMS9Y68PKJ1XXHTQPP87VRQ",
+       "https://kick.com/agruck/clips/clip_01KBDVE8FAAWQ4XCVEBWPW1SCZ",
+       "https://kick.com/maurooakd/clips?sort=view&range=day",
+       "https://kick.com/macetaxeneize/clips/clip_01K0R3362B4BYX5T75RMVWXH1Q",
+       "https://kick.com/agruck/clips/clip_01KC9YKTXFY1PA93F0GBTX42CT",
+       "https://www.tiktok.com/@mercenarioakd12/video/7510801513271414072",
+       "https://www.tiktok.com/@mercenarioakd12/video/7510801513271414072"
+     ], votable: true},
+    {titulo: "VIEWER MÁS FACHERO DEL AÑO 😎", opciones: ["GERO","MATEAKD"], votable: true},
+    {titulo: "MEJOR TEMA DEL AÑO 🎶", opciones: ["JOSEO NOCTURNO","WILY","TONKA","TAN MALA","COLD GÁRGOLA"], votable: true},
+    {titulo: "VIEWER MÁS PLAGA 🕷️", opciones: ["ENZO","ZEIKO","TINELPRO","NOAH","JOACO"], votable: true},
+    {titulo: "MEJOR VIP DEL AÑO 👑", opciones: ["AGUSTÍNCARP","NOAH","UBI","MACCI","LAMINESALADO"], votable: true},
+    {titulo: "VIEWER MÁS OG ☠️", opciones: ["TOUZE","FRANPRODS","NICOBARI","LUKITAS","EDAN"], votable: true},
+    {titulo: "MEJOR CLIPERO DEL AÑO 🎬", opciones: ["CLIPSZETA","MAXITO","BRUNO","MATEAKD","UBI"], votable: true},
+    {titulo: "MEJOR DEFENSOR DE HAXBALL 2️⃣", opciones: ["ZEIKO","JOAKO"], votable: true},
+    {titulo: "MEJOR MEDIO DE HAXBALL 8️⃣", opciones: ["LEO","TAMPA"], votable: true},
+    {titulo: "MEJOR EXTREMO DE HAXBALL 7️⃣", opciones: ["RF","SANGU"], votable: true}
+  ];
 
-// 🔥 FIRESTORE FUNCTIONS
-async function guardarUsuario() {
-  try {
-    await setDoc(doc(db, 'usuarios', usuario.email), {
-      nombre: usuario.nombre,
-      email: usuario.email,
-      timestamp: Date.now(),
-      totalVotos: 0,
-      completado: false
-    });
-  } catch(e) {
-    console.error('Error guardando usuario:', e);
-  }
-}
+  elementos.totalTernasSpan.textContent = ternasData.length;
 
-async function guardarVotos() {
-  if (!usuario) return;
-  
-  try {
-    for (const [clave, votoDataStr] of Object.entries(votos)) {
-      const votoData = typeof votoDataStr === 'string' ? JSON.parse(votoDataStr) : votoDataStr;
-      await setDoc(doc(db, 'usuarios', usuario.email, 'votos', clave), {
-        opcion: votoData.opcion,
-        timestamp: Date.now(),
-        terna: votoData.terna || ternasData[parseInt(clave.split('-')[1])]?.titulo
-      });
-    }
-    
-    const totalVotables = ternasData.filter(t => t.votable).length;
-    const votosCompletados = ternasData.filter((t, i) => t.votable && votos[`${usuario.email}-${i}`]).length;
-    
-    await updateDoc(doc(db, 'usuarios', usuario.email), {
-      totalVotos: votosCompletados,
-      completado: votosCompletados === totalVotables
-    });
-    
-    localStorage.setItem('votosGargolas', JSON.stringify(votos));
-  } catch(e) {
-    console.error('Error guardando votos:', e);
-  }
-}
+  // --------------------------
+  // Variables globales
+  // --------------------------
+  let usuarioActual = null;
+  let votos = [];
+  let indice = 0;
 
-async function cargarDatos() {
-  const savedUser = localStorage.getItem('usuarioGargolas');
-  if (!savedUser) return false;
-  
-  try {
-    usuario = JSON.parse(savedUser);
-    if (!validarUsuario(usuario)) return false;
-    
-    const userDoc = await getDoc(doc(db, 'usuarios', usuario.email));
-    if (userDoc.exists()) {
-      const userData = userDoc.data();
-      if (userData.completado) {
-        mostrarError('Ya completaste tu votación');
-        return false;
-      }
-      
-      const votosCollection = collection(db, 'usuarios', usuario.email, 'votos');
-      const votosSnapshot = await getDocs(votosCollection);
-      votosSnapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        votos[docSnap.id] = JSON.stringify({
-          opcion: data.opcion,
-          timestamp: data.timestamp,
-          terna: data.terna
-        });
-      });
-    }
-    
-    return true;
-  } catch(e) {
-    console.warn('Firestore no disponible');
-    return validarUsuario(usuario);
-  }
-}
+  // --------------------------
+  // Funciones
+  // --------------------------
+  window.registrar = function() {
+    const nombre = document.getElementById('nombre').value.trim();
+    const email = document.getElementById('email').value.trim();
 
-function escucharVotosRealtime() {
-  if (unsubscribe) unsubscribe();
-  unsubscribe = onSnapshot(doc(db, 'usuarios', usuario.email), (docSnap) => {
-    if (docSnap.exists()) {
-      actualizarTodo();
-    }
-  });
-}
-
-// ========== APP FUNCTIONS ==========
-function validarEmail(email) {
-  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return regex.test(email);
-}
-
-function validarUsuario(user) {
-  return user && user.nombre && user.nombre.trim() && 
-         user.email && validarEmail(user.email) && 
-         user.timestamp && (Date.now() - user.timestamp) < 7 * 24 * 60 * 60 * 1000;
-}
-
-window.registrar = async function() {
-  const nombre = document.getElementById('nombre').value.trim();
-  const email = document.getElementById('email').value.trim().toLowerCase();
-  
-  if (!nombre || nombre.length < 2 || !validarEmail(email)) {
-    mostrarError('Completa todos los datos correctamente');
-    return;
-  }
-  
-  try {
-    const docSnap = await getDoc(doc(db, 'usuarios', email));
-    if (docSnap.exists() && docSnap.data().completado) {
-      mostrarError('Ya completaste tu votación anteriormente');
+    if(nombre === "" || email === ""){
+      mostrarError("Debes completar todos los campos");
       return;
     }
-  } catch(e) {}
-  
-  usuario = { nombre: nombre.substring(0, 50), email, timestamp: Date.now() };
-  
-  await guardarUsuario();
-  localStorage.setItem('usuarioGargolas', JSON.stringify(usuario));
-  
-  elementos.usuarioSpan.textContent = usuario.nombre;
-  elementos.usuarioCompletado.textContent = usuario.nombre;
-  elementos.timestamp.textContent = '(Hoy)';
-  
-  mostrarSeccionVotacion();
-  escucharVotosRealtime();
-  mostrarExito('¡Registro exitoso! Comienza a votar.');
-}
-
-function obtenerClaveActual() {
-  return `${usuario.email}-${index}`;
-}
-
-function abrirVideo(url, opcionIndex) {
-  const modal = document.getElementById('video-modal');
-  const iframe = document.getElementById('mini-video');
-  
-  let embedUrl = url;
-  
-  if (url.includes('kick.com')) {
-    embedUrl = url;
-  } else if (url.includes('tiktok.com')) {
-    embedUrl = url.replace('/video/', '/embed/');
-  }
-  
-  iframe.src = embedUrl;
-  modal.classList.add('activo');
-}
-
-window.cerrarVideo = function() {
-  const modal = document.getElementById('video-modal');
-  const iframe = document.getElementById('mini-video');
-  
-  iframe.src = '';
-  modal.classList.remove('activo');
-}
-
-async function votar(opcion) {
-  if (!usuario || !ternasData[index].votable) return;
-  
-  const clave = obtenerClaveActual();
-  votos[clave] = JSON.stringify({
-    opcion,
-    timestamp: Date.now(),
-    terna: ternasData[index].titulo
-  });
-  
-  await guardarVotos();
-  localStorage.setItem('votosGargolas', JSON.stringify(votos));
-  actualizarTodo();
-  mostrarExito('¡Voto registrado!');
-}
-
-function verificarPuedeAvanzar() {
-  for (let i = 0; i <= index; i++) {
-    if (ternasData[i].votable && !votos[`${usuario.email}-${i}`]) {
-      return false;
+    if(!email.includes("@")){
+      mostrarError("Ingresa un email válido");
+      return;
     }
+
+    usuarioActual = {nombre,email};
+    elementos.usuarioSpan.textContent = nombre;
+    elementos.timestamp.textContent = `(${new Date().toLocaleString()})`;
+
+    elementos.registro.classList.add('hidden');
+    elementos.votacion.classList.remove('hidden');
+
+    generarTernas();
+    mostrarTerna(0);
   }
-  return true;
-}
 
-function generarTernas() {
-  ternasData.forEach((terna, i) => {
-    const div = document.createElement('div');
-    div.className = `terna ${!terna.votable ? 'terna-invotable' : ''}`;
-    div.dataset.categoria = i;
-    
-    const opcionesHTML = terna.votable ? 
-      terna.opciones.map((opcion, opcionIndex) => {
-        const safeOp = opcion.replace(/[<>&"']/g, c => ({
-          '<': '&lt;', '>': '&gt;', '&': '&amp;', 
-          '"': '&quot;', "'": '&#x27;'
-        })[c]);
-        
-        // Detectar si es terna de videos
-        const esVideo = terna.videos && terna.videos[opcionIndex];
-        const claseVideo = esVideo ? 'opcion video-clip' : 'opcion';
-        const dataVideo = esVideo ? `data-video="${terna.videos[opcionIndex]}" data-index="${opcionIndex}"` : '';
-        
-        return `<div class="${claseVideo}" data-opcion="${safeOp}" ${dataVideo}>${opcion}</div>`;
-      }).join('') : 
-      '<div style="text-align:center;color:#888;font-style:italic">Terna no disponible para votar</div>';
-    
-    div.innerHTML = `
-      <h3>${terna.titulo}</h3>
-      <div class="opciones">${opcionesHTML}</div>
-    `;
-    
-    elementos.ternasContainer.appendChild(div);
-    ternasElements.push(div);
-  });
-}
+  function mostrarError(msg){
+    elementos.errorMsg.textContent = msg;
+    elementos.errorMsg.style.display = "block";
+    setTimeout(()=>{elementos.errorMsg.style.display="none"},4000);
+  }
 
-function actualizarTodo() {
-  ternasElements.forEach((t, i) => {
-    t.classList.toggle('activa', i === index);
-  });
-  
-  if (ternasElements[index]) {
-    const opciones = ternasElements[index].querySelectorAll('.opcion');
-    const votoActual = votos[obtenerClaveActual()];
-    const votoSeleccionado = votoActual ? JSON.parse(votoActual).opcion : null;
-    
-    opciones.forEach(op => {
-      op.classList.toggle('votado', op.dataset.opcion === votoSeleccionado);
+  function mostrarExito(msg){
+    elementos.successMsg.textContent = msg;
+    elementos.successMsg.style.display = "block";
+    setTimeout(()=>{elementos.successMsg.style.display="none"},4000);
+  }
+  function generarTernas(){
+    elementos.ternasContainer.innerHTML = "";
+    ternasData.forEach((terna,i)=>{
+      const div = document.createElement('div');
+      div.className = 'terna';
+      div.id = `terna-${i}`;
+
+      const h3 = document.createElement('h3');
+      h3.textContent = `${i+1}. ${terna.titulo}`;
+      div.appendChild(h3);
+
+      const opcionesDiv = document.createElement('div');
+      opcionesDiv.className = 'opciones';
+
+      terna.opciones.forEach((opcion,j)=>{
+        const btn = document.createElement('div');
+        btn.className = 'opcion';
+        btn.textContent = opcion;
+
+        // Revisar si hay video
+        const tieneVideo = terna.videos && terna.videos[j];
+
+        // Función de clic
+        btn.onclick = () => {
+          if(terna.votable){
+            votos[i] = terna.opciones[j];
+            mostrarExito(`Voto registrado: ${votos[i]}`);
+            elementos.siguienteBtn.disabled = false;
+          }
+          if(tieneVideo){
+            abrirVideo(terna.videos[j]);
+          }
+        };
+
+        opcionesDiv.appendChild(btn);
+      });
+
+      div.appendChild(opcionesDiv);
+      elementos.ternasContainer.appendChild(div);
     });
   }
-  
-  elementos.siguienteBtn.disabled = !verificarPuedeAvanzar() || index >= ternasData.length - 1;
-  elementos.volverBtn.disabled = index === 0;
-  elementos.siguienteBtn.textContent = index >= ternasData.length - 1 ? '¡Finalizar! ➡' : 'Siguiente ➡';
-  
-  actualizarProgreso();
-}
 
-function actualizarProgreso() {
-  const totalVotables = ternasData.filter(t => t.votable).length;
-  const votosCompletados = ternasData.filter((t, i) => 
-    t.votable && votos[`${usuario.email}-${i}`]
-  ).length;
   
-  elementos.totalSpan.textContent = votosCompletados;
-  elementos.totalTernasSpan.textContent = totalVotables;
-  elementos.progressFill.style.width = totalVotables ? 
-    `${(votosCompletados / totalVotables) * 100}%` : '0%';
-  
-  if (votosCompletados === totalVotables) {
-    marcarVotacionCompleta();
+  function mostrarTerna(idx){
+    indice = idx;
+    const todas = document.querySelectorAll('.terna');
+    todas.forEach(t => t.classList.remove('activa'));
+    const actual = document.getElementById(`terna-${idx}`);
+    if(actual) actual.classList.add('activa');
+
+    elementos.volverBtn.disabled = idx === 0;
+    elementos.siguienteBtn.disabled = false;
+
+    actualizarProgreso();
   }
-}
 
-async function marcarVotacionCompleta() {
-  await updateDoc(doc(db, 'usuarios', usuario.email), {
-    completado: true,
-    fechaCompletado: Date.now()
-  });
-  
-  elementos.votacion.querySelector('.nav').style.display = 'none';
-  elementos.completado.classList.remove('hidden');
-}
-
-function mostrarSeccionVotacion() {
-  elementos.registro.classList.add('hidden');
-  elementos.votacion.classList.remove('hidden');
-  elementos.totalTernasSpan.textContent = ternasData.filter(t => t.votable).length;
-}
-
-function mostrarError(msg) {
-  elementos.errorMsg.textContent = msg;
-  elementos.errorMsg.style.display = 'block';
-  elementos.successMsg.style.display = 'none';
-  setTimeout(() => elementos.errorMsg.style.display = 'none', 5000);
-}
-
-function mostrarExito(msg) {
-  elementos.successMsg.textContent = msg;
-  elementos.successMsg.style.display = 'block';
-  elementos.errorMsg.style.display = 'none';
-  setTimeout(() => elementos.successMsg.style.display = 'none', 3000);
-}
-
-window.reiniciarVotacion = function() {
-  if (confirm('¿Seguro que quieres reiniciar? Perderás tu progreso.')) {
-    localStorage.removeItem('usuarioGargolas');
-    localStorage.removeItem('votosGargolas');
-    location.reload();
+  function actualizarProgreso(){
+    elementos.totalSpan.textContent = votos.length;
+    const porcentaje = ((votos.length/ternasData.length)*100).toFixed(0);
+    elementos.progressFill.style.width = `${porcentaje}%`;
   }
-}
 
-function bindEventListeners() {
-  elementos.ternasContainer.addEventListener('click', async (e) => {
-    // Verificar si es un video clip
-    if (e.target.classList.contains('video-clip')) {
-      const videoUrl = e.target.dataset.video;
-      if (videoUrl) {
-        abrirVideo(videoUrl, e.target.dataset.index);
-        return;
-      }
-    }
-    
-    // Voto normal
-    if (e.target.classList.contains('opcion') && !e.target.classList.contains('disabled') && !e.target.classList.contains('video-clip')) {
-      const opcion = e.target.dataset.opcion;
-      await votar(opcion);
-    }
-  });
-
-  // Cerrar modal clicando fuera
-  document.getElementById('video-modal').addEventListener('click', (e) => {
-    if (e.target.id === 'video-modal') cerrarVideo();
-  });
+  function seleccionarOpcion(ternaIdx, opcionIdx){
+    votos[ternaIdx] = ternasData[ternaIdx].opciones[opcionIdx];
+    mostrarExito(`Voto registrado: ${votos[ternaIdx]}`);
+    elementos.siguienteBtn.disabled = false;
+  }
 
   elementos.siguienteBtn.onclick = () => {
-    if (index < ternasData.length - 1) {
-      index++;
-      actualizarTodo();
+    if(indice<ternasData.length-1){
+      mostrarTerna(indice+1);
+    } else {
+      completarVotacion();
     }
-  };
-  
-  elementos.volverBtn.onclick = () => {
-    if (index > 0) {
-      index--;
-      actualizarTodo();
-    }
-  };
-  
-  document.getElementById('nombre').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') registrar();
-  });
-  document.getElementById('email').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') registrar();
-  });
-}
-
-async function init() {
-  await cargarDatos();
-  
-  if (usuario) {
-    mostrarSeccionVotacion();
-    elementos.usuarioSpan.textContent = usuario.nombre;
-    escucharVotosRealtime();
   }
-  
-  generarTernas();
-  bindEventListeners();
-  actualizarTodo();
-}
 
-init();
+  elementos.volverBtn.onclick = () => {
+    if(indice>0) mostrarTerna(indice-1);
+  }
+
+  function completarVotacion(){
+    elementos.votacion.classList.add('hidden');
+    elementos.completado.classList.remove('hidden');
+    elementos.usuarioCompletado.textContent = usuarioActual.nombre;
+    guardarVotos();
+  }
+
+  function reiniciarVotacion(){
+    votos = [];
+    indice = 0;
+    elementos.completado.classList.add('hidden');
+    elementos.registro.classList.remove('hidden');
+  }
+
+  async function guardarVotos(){
+    if(!usuarioActual) return;
+    try{
+      const ref = doc(db,"votos",usuarioActual.email);
+      await setDoc(ref,{nombre:usuarioActual.nombre,email:usuarioActual.email,votos,fecha:new Date()});
+      console.log("Votos guardados correctamente");
+    } catch(err){
+      console.error(err);
+      mostrarError("Error guardando votos");
+    }
+  }
+
+  // --------------------------
+  // Video modal
+  // --------------------------
+  window.abrirVideo = function(url){
+    const iframe = document.getElementById('mini-video');
+    if(url.includes("tiktok.com")){
+      iframe.src = url.replace("www.tiktok.com","www.tiktok.com/embed");
+    } else {
+      iframe.src = url;
+    }
+    document.getElementById('video-modal').classList.add('activo');
+  }
+
+  window.cerrarVideo = function(){
+    const iframe = document.getElementById('mini-video');
+    iframe.src = "";
+    document.getElementById('video-modal').classList.remove('activo');
+  }
+
+});
 </script>
 </body>
 </html>
