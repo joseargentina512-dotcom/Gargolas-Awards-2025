@@ -120,6 +120,22 @@ button:disabled{opacity:.4;cursor:not-allowed;background:#505077}
   font-size:14px;
   word-break:break-word;
   user-select:none;
+  position:relative;
+}
+
+.opcion .video-icon {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: rgba(176,141,50,0.8);
+  color: white;
+  border-radius: 50%;
+  width: 25px;
+  height: 25px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .opcion:hover:not(.votado):not(.disabled){border-color:#b08d32;transform:translateY(-2px)}
@@ -201,7 +217,7 @@ button:disabled{opacity:.4;cursor:not-allowed;background:#505077}
 .video-modal{
   position:fixed;
   top:0;left:0;width:100%;height:100%;
-  background:rgba(0,0,0,0.8);
+  background:rgba(0,0,0,0.9);
   display:none;
   align-items:center;
   justify-content:center;
@@ -214,32 +230,40 @@ button:disabled{opacity:.4;cursor:not-allowed;background:#505077}
   position:relative;
   width:90%;
   max-width:640px;
+  max-height:80vh;
 }
 
 .mini-player iframe{
   width:100%;
   height:360px;
+  max-height:70vh;
   border:none;
   border-radius:12px;
+  aspect-ratio: 9/16;
 }
 
 .cerrar-video{
   position:absolute;
-  top:10px;
-  right:10px;
-  background:transparent;
-  border:none;
-  border-radius:0;
-  width:30px;
-  height:30px;
-  font-size:24px;
+  top:-15px;
+  right:-15px;
+  background:rgba(0,0,0,0.8);
+  border:2px solid #fff;
+  border-radius:50%;
+  width:40px;
+  height:40px;
+  font-size:20px;
   cursor:pointer;
   color:#fff;
   font-weight:bold;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:10000;
 }
 
 .cerrar-video:hover {
-  color:#ff4444;
+  background:#ff4444;
+  border-color:#ff4444;
 }
 
 @media (max-width: 768px) {
@@ -248,6 +272,7 @@ button:disabled{opacity:.4;cursor:not-allowed;background:#505077}
   .opcion{flex:1 1 100%;max-width:100%;padding:15px;font-size:16px}
   .nav{flex-direction:column}
   .nav button{width:100%}
+  .mini-player iframe{height:50vh;}
 }
 </style>
 </head>
@@ -291,7 +316,7 @@ button:disabled{opacity:.4;cursor:not-allowed;background:#505077}
   <div id="video-modal" class="video-modal">
     <div class="mini-player">
       <button class="cerrar-video" onclick="cerrarVideo()" aria-label="Cerrar video">✕</button>
-      <iframe id="mini-video" frameborder="0" allowfullscreen allow="autoplay; fullscreen; picture-in-picture"></iframe>
+      <iframe id="mini-video" frameborder="0" allowfullscreen allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media"></iframe>
     </div>
   </div>
 </div>
@@ -357,8 +382,8 @@ document.addEventListener('DOMContentLoaded', function() {
        "https://kick.com/maurooakd/clips?sort=view&range=day",
        "https://kick.com/macetaxeneize/clips/clip_01K0R3362B4BYX5T75RMVWXH1Q",
        "https://kick.com/agruck/clips/clip_01KC9YKTXFY1PA93F0GBTX42CT",
-       "https://www.tiktok.com/@mercenarioakd12/embed/v2/7510801513271414072",
-       "https://www.tiktok.com/@mercenarioakd12/embed/v2/7510801513271414072"
+       "https://www.tiktok.com/@mercenarioakd12/video/7510801513271414072",
+       "https://www.tiktok.com/@mercenarioakd12/video/7510801513271414073"
      ], votable: true},
     {titulo: "VIEWER MÁS FACHERO DEL AÑO 😎", opciones: ["GERO","MATEAKD","FONTANA","SANTY"], votable: true},
     {titulo: "MEJOR TEMA DEL AÑO 🎶", opciones: ["JOSEO NOCTURNO","WILLY TONKA","GARGOLA","COLD"], votable: true},
@@ -444,6 +469,13 @@ document.addEventListener('DOMContentLoaded', function() {
         btn.setAttribute('aria-label', `Votar por ${opcion}`);
 
         const tieneVideo = terna.videos && terna.videos[j];
+
+        if (tieneVideo) {
+          const videoIcon = document.createElement('div');
+          videoIcon.className = 'video-icon';
+          videoIcon.textContent = '🎥';
+          btn.appendChild(videoIcon);
+        }
 
         btn.addEventListener('click', () => {
           if (terna.votable && !btn.classList.contains('votado')) {
@@ -545,32 +577,62 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  // Video modal - TIKTOK CORREGIDO
+  // 🎥 REPRODUCTOR DE VIDEO CORREGIDO - FUNCIONA CON TIKTOK Y KICK
   window.abrirVideo = function(url) {
     const iframe = document.getElementById('mini-video');
     let embedUrl = url;
     
-    // TikTok embed correcto
-    if (url.includes("tiktok.com/video/")) {
-      const videoId = url.match(/video\/(\d+)/)[1];
-      embedUrl = `https://www.tiktok.com/@mercenarioakd12/embed/v2/${videoId}`;
-    } else if (url.includes("tiktok.com")) {
-      embedUrl = url.replace(/\/video\//, '/embed/v2/');
+    // TikTok: Convertir cualquier URL de TikTok a embed correcto
+    if (url.includes('tiktok.com')) {
+      // Extraer ID del video desde cualquier formato de URL de TikTok
+      let videoId = null;
+      
+      // Formato: tiktok.com/@user/video/123456789
+      const match1 = url.match(/\/video\/(\d+)/);
+      if (match1) videoId = match1[1];
+      
+      // Formato embed existente
+      if (url.includes('/embed/v2/')) {
+        embedUrl = url;
+      } 
+      // Si encontramos ID, crear embed correcto
+      else if (videoId) {
+        embedUrl = `https://www.tiktok.com/embed/v2/${videoId}`;
+      }
+      // Fallback: usar URL directa (TikTok a veces funciona)
+      else {
+        embedUrl = url;
+      }
+    }
+    // Kick clips funcionan directamente
+    else if (url.includes('kick.com')) {
+      embedUrl = url;
     }
     
+    console.log('Reproduciendo:', embedUrl);
     iframe.src = embedUrl;
+    iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen';
+    iframe.allowFullscreen = true;
     document.getElementById('video-modal').classList.add('activo');
   };
 
   window.cerrarVideo = function() {
     const iframe = document.getElementById('mini-video');
     iframe.src = "";
+    iframe.allow = '';
     document.getElementById('video-modal').classList.remove('activo');
   };
 
-  // Cerrar modal con ESC
+  // Cerrar modal con ESC o clic fuera
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
+      window.cerrarVideo();
+    }
+  });
+
+  // Cerrar clic fuera del video
+  document.getElementById('video-modal').addEventListener('click', function(e) {
+    if (e.target === this) {
       window.cerrarVideo();
     }
   });
