@@ -119,6 +119,7 @@ button:disabled{opacity:.4;cursor:not-allowed;background:#505077}
   transition:.3s;
   font-size:14px;
   word-break:break-word;
+  position: relative;
 }
 
 .opcion:hover:not(.votado):not(.disabled){border-color:#b08d32;transform:translateY(-2px)}
@@ -134,6 +135,16 @@ button:disabled{opacity:.4;cursor:not-allowed;background:#505077}
   opacity:0.5;
   cursor:not-allowed;
   background:#2a2a3e;
+}
+
+.opcion.video-clip::after {
+  content: "▶";
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #b08d32;
+  font-size: 18px;
 }
 
 .nav{
@@ -197,12 +208,61 @@ button:disabled{opacity:.4;cursor:not-allowed;background:#505077}
   display:none;
 }
 
+/* Mini reproductor de video */
+.video-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.9);
+  z-index: 1000;
+  justify-content: center;
+  align-items: center;
+}
+
+.video-modal.activo { display: flex; }
+
+.mini-player {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+  background: #000;
+  border-radius: 15px;
+  box-shadow: 0 20px 60px rgba(176,141,50,0.5);
+}
+
+.mini-player iframe {
+  width: 100%;
+  height: 500px;
+  border-radius: 15px;
+  object-fit: contain;
+}
+
+.cerrar-video {
+  position: absolute;
+  top: -50px;
+  right: 0;
+  background: #b08d32;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.cerrar-video:hover { background: #9c7c19; }
+
 @media (max-width: 768px) {
   .container{padding:15px}
   input{width:90vw;max-width:300px}
   .opcion{flex:1 1 100%;max-width:100%;padding:15px;font-size:16px}
   .nav{flex-direction:column}
   .nav button{width:100%}
+  .mini-player iframe { height: 60vh; }
 }
 </style>
 </head>
@@ -250,6 +310,14 @@ button:disabled{opacity:.4;cursor:not-allowed;background:#505077}
       <button onclick="reiniciarVotacion()" style="font-size:20px;padding:20px 40px">🔄 Nueva Votación</button>
     </div>
   </div>
+
+  <!-- Mini reproductor de video -->
+  <div id="video-modal" class="video-modal">
+    <div class="mini-player">
+      <button class="cerrar-video" onclick="cerrarVideo()">✕</button>
+      <iframe id="mini-video" frameborder="0" allowfullscreen allow="autoplay; fullscreen; picture-in-picture"></iframe>
+    </div>
+  </div>
 </div>
 
 <script type="module">
@@ -283,10 +351,30 @@ const ternasData = [
   {titulo: "TOP DONADORES 💸", opciones: ["NICOBARI","UBI","SANTY","MAXITO","BRUNO"], votable: true},
   {titulo: "MEJOR ARTISTA DEL AÑO 🎙️", opciones: ["LP","NAFIELD","TOUZE","DRAKO","MATEAKD"], votable: true},
   {titulo: "MEJOR CHATTER DEL AÑO 💬", opciones: ["JOACO","GERO","PABLITOCLIPS","ENZO","ERNESTO"], votable: true},
-  {titulo: "MEJOR PJ DEL FC 🙎", opciones: ["BRUNO GARGOLAS","BENJAMIN142420","RDC","ENZO (LOS 2)","LAMINE SALADO GÁRGOLAS","IRIONDO GÁRGOLAS"], votable: true},
-  {titulo: "VIEWER PROMESA DEL AÑO 💎", opciones: ["PABLITOCLIPS","ENZITOGOD","SANTY","ERNESTO","MACCI"], votable: true},
+  {titulo: "MEJOR PJ DEL FC 🙎", opciones: ["BRUNO GARGOLAS","BENJAMÍN142420","RDC","ENZO (LOS 2)","LAMINE SALADO GÁRGOLAS","IRIONDO GÁRGOLAS"], votable: true},
+  {titulo: "VIEWER PROMESA DEL AÑO 💎", opciones: ["PABLITOCLIPS","ENZITOGOD","SANTY","LAU LOPES","MACCI"], votable: true},
   {titulo: "MEJOR NOMBRE DE LA COMUNIDAD 🏷️", opciones: ["SANGUCHITO","LAMINESALADO","FACUREIG","TRABUCODEURUGUAY","AGRUCK"], votable: true},
   {titulo: "MEJOR EDIT DEL AÑO 👏", opciones: ["FRANPRODS","LEOTALLERES","NAXITORP","MATEAKD"], votable: true},
+  {titulo: "MEJOR CLIP DEL AÑO 📹", 
+   opciones: [
+     "MauroOakd #1", 
+     "Agruck #1", 
+     "MauroOakd Clips", 
+     "Macetaxeneize", 
+     "Agruck #2", 
+     "MercenarioAKD #1", 
+     "MercenarioAKD #2"
+   ], 
+   videos: [
+     "https://kick.com/maurooakd/clips/clip_01JNMS9Y68PKJ1XXHTQPP87VRQ",
+     "https://kick.com/agruck/clips/clip_01KBDVE8FAAWQ4XCVEBWPW1SCZ", 
+     "https://kick.com/maurooakd/clips?sort=view&range=day",
+     "https://kick.com/macetaxeneize/clips/clip_01K0R3362B4BYX5T75RMVWXH1Q",
+     "https://kick.com/agruck/clips/clip_01KC9YKTXFY1PA93F0GBTX42CT",
+     "https://www.tiktok.com/@mercenarioakd12/video/7510801513271414072",
+     "https://www.tiktok.com/@mercenarioakd12/video/7510801513271414072"
+   ], 
+   votable: true},
   {titulo: "VIEWER MÁS FACHERO DEL AÑO 😎", opciones: ["GERO","MATEAKD"], votable: true},
   {titulo: "MEJOR TEMA DEL AÑO 🎶", opciones: ["JOSEO NOCTURNO","WILY","TONKA","TAN MALA","COLD GÁRGOLA"], votable: true},
   {titulo: "VIEWER MÁS PLAGA 🕷️", opciones: ["ENZO","ZEIKO","TINELPRO","NOAH","JOACO"], votable: true},
@@ -456,6 +544,30 @@ function obtenerClaveActual() {
   return `${usuario.email}-${index}`;
 }
 
+function abrirVideo(url, opcionIndex) {
+  const modal = document.getElementById('video-modal');
+  const iframe = document.getElementById('mini-video');
+  
+  let embedUrl = url;
+  
+  if (url.includes('kick.com')) {
+    embedUrl = url;
+  } else if (url.includes('tiktok.com')) {
+    embedUrl = url.replace('/video/', '/embed/');
+  }
+  
+  iframe.src = embedUrl;
+  modal.classList.add('activo');
+}
+
+window.cerrarVideo = function() {
+  const modal = document.getElementById('video-modal');
+  const iframe = document.getElementById('mini-video');
+  
+  iframe.src = '';
+  modal.classList.remove('activo');
+}
+
 async function votar(opcion) {
   if (!usuario || !ternasData[index].votable) return;
   
@@ -488,12 +600,18 @@ function generarTernas() {
     div.dataset.categoria = i;
     
     const opcionesHTML = terna.votable ? 
-      terna.opciones.map(opcion => {
+      terna.opciones.map((opcion, opcionIndex) => {
         const safeOp = opcion.replace(/[<>&"']/g, c => ({
           '<': '&lt;', '>': '&gt;', '&': '&amp;', 
           '"': '&quot;', "'": '&#x27;'
         })[c]);
-        return `<div class="opcion" data-opcion="${safeOp}">${opcion}</div>`;
+        
+        // Detectar si es terna de videos
+        const esVideo = terna.videos && terna.videos[opcionIndex];
+        const claseVideo = esVideo ? 'opcion video-clip' : 'opcion';
+        const dataVideo = esVideo ? `data-video="${terna.videos[opcionIndex]}" data-index="${opcionIndex}"` : '';
+        
+        return `<div class="${claseVideo}" data-opcion="${safeOp}" ${dataVideo}>${opcion}</div>`;
       }).join('') : 
       '<div style="text-align:center;color:#888;font-style:italic">Terna no disponible para votar</div>';
     
@@ -585,10 +703,25 @@ window.reiniciarVotacion = function() {
 
 function bindEventListeners() {
   elementos.ternasContainer.addEventListener('click', async (e) => {
-    if (e.target.classList.contains('opcion') && !e.target.classList.contains('disabled')) {
+    // Verificar si es un video clip
+    if (e.target.classList.contains('video-clip')) {
+      const videoUrl = e.target.dataset.video;
+      if (videoUrl) {
+        abrirVideo(videoUrl, e.target.dataset.index);
+        return;
+      }
+    }
+    
+    // Voto normal
+    if (e.target.classList.contains('opcion') && !e.target.classList.contains('disabled') && !e.target.classList.contains('video-clip')) {
       const opcion = e.target.dataset.opcion;
       await votar(opcion);
     }
+  });
+
+  // Cerrar modal clicando fuera
+  document.getElementById('video-modal').addEventListener('click', (e) => {
+    if (e.target.id === 'video-modal') cerrarVideo();
   });
 
   elementos.siguienteBtn.onclick = () => {
