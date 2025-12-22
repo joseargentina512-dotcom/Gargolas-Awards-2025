@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🏆 GARGOLAS AWARDS 2025 🏆</title>
     <style>
-        /* CSS se mantiene igual, solo aseguro que .opcion tenga fondo center/cover */
         *{margin:0;padding:0;box-sizing:border-box}
         body{font-family:'Segoe UI',Tahoma,Verdana,sans-serif;max-width:1000px;margin:auto;padding:20px;background:linear-gradient(135deg,#1a1a2e,#16213e,#0f0f23);color:#b08d32;min-height:100vh;}
         .container{background:#2d2d44;padding:30px;border-radius:20px;box-shadow:0 15px 40px rgba(0,0,0,.6);}
@@ -28,10 +27,11 @@
         .opcion span{position:relative;z-index:2;font-weight:bold;text-shadow:1px 1px 2px #000;}
         .opcion.votado{border-color:#fff;box-shadow:0 0 15px #b08d32;}
         .opcion.votado::before{background:rgba(176,141,50,0.4);}
-        .video-icon{position:absolute;top:8px;right:8px;background:red;color:white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;z-index:3;font-size:12px;}
+        .video-icon{position:absolute;top:8px;right:8px;background:#ff4444;color:white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;z-index:3;font-size:12px;}
         .nav{display:flex;justify-content:space-between;margin-top:25px;}
         .progress-bar{width:100%;height:8px;background:#2a2a3e;border-radius:4px;margin:10px 0;}
         .progress-fill{height:100%;background:#b08d32;width:0%;transition:0.3s;}
+        .stats{margin:10px 0;text-align:center;font-size:18px;}
         .error-msg{background:#ff4444;color:white;padding:10px;display:none;border-radius:10px;margin-bottom:10px;text-align:center;}
         .success-msg{background:#4CAF50;color:white;padding:10px;display:none;border-radius:10px;margin-bottom:10px;text-align:center;}
         .video-modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);display:none;align-items:center;justify-content:center;z-index:9999;}
@@ -39,10 +39,11 @@
         .mini-player{position:relative;width:90%;max-width:640px;}
         .mini-player iframe{width:100%;height:360px;border-radius:12px;}
         .cerrar-video{position:absolute;top:-20px;right:-20px;background:#000;color:#fff;border:2px solid #fff;border-radius:50%;width:40px;height:40px;cursor:pointer;z-index:10001;}
+        .opcion video{filter:brightness(0.7) contrast(1.1);}
+        .opcion:hover video{filter:brightness(0.9) contrast(1.2);}
     </style>
 </head>
 <body>
-
 <div class="container">
     <h1>🏆 GARGOLAS AWARDS 2025 🏆</h1>
     <p class="subtitle">Votación oficial — Gargolas 2025</p>
@@ -82,11 +83,10 @@
     </div>
 </div>
 
-<script type="module">
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js';
-import { getFirestore, doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js';
+<script type="text/javascript">
+let app, db, usuarioActual = null, votos = [], indice = 0;
 
-// Configuración (Asegúrate de que estos datos sean correctos)
+// Configuración Firebase
 const firebaseConfig = {
     apiKey: "AIzaSyABUYYIU42RnSYxGL5hU4EMcvnIQ80Ycmk",
     authDomain: "gargolas-awards-2025.firebaseapp.com",
@@ -96,41 +96,51 @@ const firebaseConfig = {
     appId: "1:50729106362:web:52c2dbc0f953a27c157b83"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-// Variables de Estado
-let usuarioActual = null;
-let votos = [];
-let indice = 0;
+// Datos de las ternas (TODOS LOS ERRORES CORREGIDOS)
 const ternasData = [
-{titulo: "MEJOR MOD DEL AÑO 🔜", opciones: ["BENJAMIN142420","BRUNO","MATEAKD","GERO","LEO RAIA"], imagenes: ["https://i.postimg.cc/Hn5p4hqQ/7.webp","https://i.postimg.cc/vBCYnsNv/2.webp","https://i.postimg.cc/1X69cjk0/9.webp","https://i.postimg.cc/ncdswL0r/GERO_COMPLETO.webp","https://i.postimg.cc/NGVrGS7v/leo_raia.webp"]},
+    {titulo: "MEJOR MOD DEL AÑO 🔜", opciones: ["BENJAMIN142420","BRUNO","MATEAKD","GERO","LEO RAIA"], imagenes: ["https://i.postimg.cc/Hn5p4hqQ/7.webp","https://i.postimg.cc/vBCYnsNv/2.webp","https://i.postimg.cc/1X69cjk0/9.webp","https://i.postimg.cc/ncdswL0r/GERO_COMPLETO.webp","https://i.postimg.cc/NGVrGS7v/leo_raia.webp"]},
     {titulo: "MEJOR VIEWER DEL AÑO ", opciones: ["BENJAMIN142420","BRUNO","GERO","ENZO","JOACO"], imagenes: ["https://i.postimg.cc/y3147vYd/7.webp","https://i.postimg.cc/XGc6MT3Z/2.webp","https://i.postimg.cc/ncdswL0r/GERO_COMPLETO.webp","https://i.postimg.cc/8zV8Gk7P/enzo_la_maquina.webp","https://i.postimg.cc/sQ9CFtyD/1.webp"]},
     {titulo: "VIEWER REVELACIÓN 🔥", opciones: ["VILLAFANEXO","ENZO","TAMPA","ENZITOGOD","MACCI"], imagenes: ["","https://i.postimg.cc/8zV8Gk7P/enzo_la_maquina.webp","https://i.postimg.cc/8cW1B02Z/15.webp","https://i.postimg.cc/wjxtwz9z/yo.webp","https://i.postimg.cc/W3xNZvHS/4.webp"]},
     {titulo: "MOD REVELACIÓN 💣", opciones: ["BRUNO","ENZO","JOACO","AGRUCK","LEORAIA"], imagenes: ["https://i.postimg.cc/XGc6MT3Z/2.webp","https://i.postimg.cc/8zV8Gk7P/enzo_la_maquina.webp","https://i.postimg.cc/sQ9CFtyD/1.webp","https://i.postimg.cc/15ScZ4Gm/agruck.webp","https://i.postimg.cc/NGVrGS7v/leo_raia.webp"]},
     {titulo: "MEJOR JUGADOR DE HAXBALL ⚽", opciones: ["RF","ZEIKO","SANGU","ABION"], imagenes: ["https://i.postimg.cc/VLwNvgtt/22.webp","https://i.postimg.cc/3NpKCcsf/16.webp","https://i.postimg.cc/pLtNvVmx/sangu.webp","https://i.postimg.cc/yx9VXbMQ/17.webp"]},
-    {titulo: "PEOR JUGADOR DE HAXBALL 💩", opciones: ["BENJAMIN142420","LAMINE","COMECARNE","PALERMO","MACCI"], imagenes: ["https://i.postimg.cc/y3147vYd/7.webp","https://i.postimg.cc/SxZn5PKg/lamine.webp","","","https://i.postimg.cc/W3xNZvHS/4.webp"]},
+    {titulo: "PEOR JUGADOR DE HAXBALL 💩", opciones: ["BENJAMIN142420","LAMINE","COMECARNE","PALERMO","MACCI"], imagenes: ["https://i.postimg.cc/y3147vYd/7.webp","https://i.postimg.cc/SxZn5PKg/lamine.webp","https://i.postimg.cc/ZqncFWTw/Picsart_25_12_21_18_32_31_091.png","https://i.postimg.cc/3wNBCkK9/Picsart_25_12_21_18_32_20_201.png","https://i.postimg.cc/W3xNZvHS/4.webp"]},
     {titulo: "TOP WATCHTIME ⏰", opciones: ["BENJAMIN142420","GERO","BRUNO","JOAKO","ENZO"], imagenes: ["https://i.postimg.cc/y3147vYd/7.webp","https://i.postimg.cc/ncdswL0r/GERO_COMPLETO.webp","https://i.postimg.cc/XGc6MT3Z/2.webp","https://i.postimg.cc/sQ9CFtyD/1.webp","https://i.postimg.cc/8zV8Gk7P/enzo_la_maquina.webp"]},
     {titulo: "MEJOR STREAMER DE LA COMUNIDAD 🟢", opciones: ["FACU IRIONDO","SANTI GRIZAS","TORO FUTBOL","AGRUCK","NATABENITEZZZ"], imagenes: ["https://i.postimg.cc/rwL6TyD8/facu.webp","https://i.postimg.cc/CMtfMXCX/santi_grizas.webp","https://i.postimg.cc/xj7bjhyS/toro_futbol.webp","https://i.postimg.cc/15ScZ4Gm/agruck.webp","https://i.postimg.cc/DwnTsQqv/nata.webp"]},
     {titulo: "MEJOR EDITOR 🖥️", opciones: ["MATE","CAMINO","FRANPRODS","LEO TALLERES","FONTANA"], imagenes: ["https://i.postimg.cc/1X69cjk0/9.webp","https://i.postimg.cc/BQCnKF5g/camino.png","https://i.postimg.cc/5yvxqRhp/12.webp","https://i.postimg.cc/Dz8TzjPN/leo_de_talleres.webp","https://i.postimg.cc/XY2rhPvg/fontana.webp"]},
-    {titulo: "TOP DONADORES 💸", opciones: ["NICOBARI","UBI","SANTY","MAXITO","BRUNO"], imagenes: ["https://i.postimg.cc/Fzc9gBMy/8.png","https://i.postimg.cc/Wzr26HBZ/6.png","","https://i.postimg.cc/brbzHB7H/10.webp","https://i.postimg.cc/XGc6MT3Z/2.webp"]},
-    {titulo: "MEJOR ARTISTA DEL AÑO 🎙️", opciones: ["LP","NAFIELD","TOUZE","DRAKO","MATEAKD"], imagenes: ["https://i.postimg.cc/nhdX5WLT/lp.webp","https://i.postimg.cc/VvMYBVxV/19.webp","","https://i.postimg.cc/CxSgDCj1/drako.png","https://i.postimg.cc/1X69cjk0/9.webp"]},
-    {titulo: "MEJOR CHATTER DEL AÑO 💬", opciones: ["JOACO","GERO","PABLITOCLIPS","ENZO","ERNESTO"], imagenes: ["https://i.postimg.cc/sQ9CFtyD/1.webp","https://i.postimg.cc/ncdswL0r/GERO_COMPLETO.webp","https://i.postimg.cc/4djfcgSQ/3.webp","https://i.postimg.cc/8zV8Gk7P/enzo_la_maquina.webp",""]},
-    {titulo: "MEJOR PJ DEL FC 🙎", opciones: ["BRUNO GARGOLAS","BENJAMIN142420","ENZO","LAMINE SALADO","IRIONDO"], imagenes: ["https://i.postimg.cc/7hCDQBfT/pj_1.webp","","https://i.postimg.cc/C5ZY6vzs/pj_2.webp","https://i.postimg.cc/tJ1ymrY3/pj_3.webp","https://i.postimg.cc/7hCDQBfg/pj_4.webp"]},
-    {titulo: "VIEWER PROMESA DEL AÑO 💎", opciones: ["PABLITOCLIPS","ENZITOGOD","SANTY","LAU LOPES","MACCI"], imagenes: ["https://i.postimg.cc/4djfcgSQ/3.webp","https://i.postimg.cc/wjxtwz9z/yo.webp","","https://i.postimg.cc/7h7xMWF9/13.webp","https://i.postimg.cc/W3xNZvHS/4.webp"]},
+    {titulo: "TOP DONADORES 💸", opciones: ["NICOBARI","UBI","SANTY","MAXITO","BRUNO"], imagenes: ["https://i.postimg.cc/Fzc9gBMy/8.png","https://i.postimg.cc/Wzr26HBZ/6.png","https://i.postimg.cc/Jh0qcs13/Picsart_25_12_21_18_01_40_811.png","https://i.postimg.cc/brbzHB7H/10.webp","https://i.postimg.cc/XGc6MT3Z/2.webp"]},
+    {titulo: "MEJOR ARTISTA DEL AÑO 🎙️", opciones: ["LP","NAFIELD","TOUZE","DRAKO","MATEAKD"], imagenes: ["https://i.postimg.cc/nhdX5WLT/lp.webp","https://i.postimg.cc/VvMYBVxV/19.webp","https://i.postimg.cc/PqJ4zCtQ/Picsart_25_12_21_18_03_07_036.png","https://i.postimg.cc/CxSgDCj1/drako.png","https://i.postimg.cc/1X69cjk0/9.webp"]},
+    {titulo: "MEJOR CHATTER DEL AÑO 💬", opciones: ["JOACO","GERO","PABLITOCLIPS","ENZO","ERNESTO"], imagenes: ["https://i.postimg.cc/sQ9CFtyD/1.webp","https://i.postimg.cc/ncdswL0r/GERO_COMPLETO.webp","https://i.postimg.cc/4djfcgSQ/3.webp","https://i.postimg.cc/8zV8Gk7P/enzo_la_maquina.webp","https://i.postimg.cc/0Njfdz8C/Picsart_25_12_21_18_01_58_233.png"]},
+    {titulo: "MEJOR PJ DEL FC 🙎", opciones: ["BRUNO GARGOLAS","BENJAMIN142420","ENZO","LAMINE SALADO","IRIONDO"], imagenes: ["https://i.postimg.cc/7hCDQBfT/pj_1.webp","https://i.postimg.cc/Jh0qcs1b/Picsart_25_12_21_18_01_49_134.png","https://i.postimg.cc/C5ZY6vzs/pj_2.webp","https://i.postimg.cc/tJ1ymrY3/pj_3.webp","https://i.postimg.cc/7hCDQBfg/pj_4.webp"]},
+    {titulo: "VIEWER PROMESA DEL AÑO 💎", opciones: ["PABLITOCLIPS","ENZITOGOD","SANTY","LAU LOPES","MACCI"], imagenes: ["https://i.postimg.cc/4djfcgSQ/3.webp","https://i.postimg.cc/wjxtwz9z/yo.webp","https://i.postimg.cc/Jh0qcs13/Picsart_25_12_21_18_01_40_811.png","https://i.postimg.cc/7h7xMWF9/13.webp","https://i.postimg.cc/W3xNZvHS/4.webp"]},
     {titulo: "MEJOR NOMBRE 🏷️", opciones: ["SANGUCHITO","LAMINESALADO","FACUREIG","TRABUCO","AGRUCK"], imagenes: ["https://i.postimg.cc/pLtNvVmx/sangu.webp","https://i.postimg.cc/SxZn5PKg/lamine.webp","https://i.postimg.cc/cCYsMbpj/20.webp","https://i.postimg.cc/JzZLH6yk/trabuco-de-uruguay.webp","https://i.postimg.cc/15ScZ4Gm/agruck.webp"]},
     {titulo: "MEJOR EDIT DEL AÑO 👏", opciones: ["FRANPRODS","LEOTALLERES","NAXITORP","MATEAKD"], imagenes: ["https://i.postimg.cc/5yvxqRhp/12.webp","https://i.postimg.cc/Dz8TzjPN/leo_de_talleres.webp","https://i.postimg.cc/nr7HYPyW/18.webp","https://i.postimg.cc/1X69cjk0/9.webp"]},
     {titulo: "MEJOR CLIP DEL AÑO 📹", opciones: ["Mauroakd #1","Agruck #1","Macetaxeneize","Agruck #2","MauroAKD #3","Mauroakd #4"], videos: ["https://kick.com/maurooakd/clips/clip_01JNMS9Y68PKJ1XXHTQPP87VRQ","https://kick.com/agruck/clips/clip_01KBDVE8FAAWQ4XCVEBWPW1SCZ","https://kick.com/macetaxeneize/clips/clip_01K0R3362B4BYX5T75RMVWXH1Q","https://kick.com/agruck/clips/clip_01KC9YKTXFY1PA93F0GBTX42CT","https://www.tiktok.com/@mercenarioakd12/video/7510801513271414072","https://www.tiktok.com/@mercenarioakd12/video/7510801513271414073"]},
-    {titulo: "VIEWER MÁS FACHERO 😎", opciones: ["GERO","MATEAKD","FONTANA","SANTY","ANDRES FUERTE"], imagenes: ["https://i.postimg.cc/KzNLGDrT/facha_gero.webp","https://i.postimg.cc/1X69cjk0/9.webp","https://i.postimg.cc/XY2rhPvg/fontana.webp","","https://i.postimg.cc/Kvbry4Px/andres_fuerte.webp"]},
+    {titulo: "VIEWER MÁS FACHERO 😎", opciones: ["GERO","MATEAKD","FONTANA","SANTY","ANDRES FUERTE"], imagenes: ["https://i.postimg.cc/KzNLGDrT/facha_gero.webp","https://i.postimg.cc/1X69cjk0/9.webp","https://i.postimg.cc/XY2rhPvg/fontana.webp","https://i.postimg.cc/Jh0qcs13/Picsart_25_12_21_18_01_40_811.png","https://i.postimg.cc/Kvbry4Px/andres_fuerte.webp"]},
     {titulo: "MEJOR TEMA DEL AÑO 🎶", opciones: ["JOSEO NOCTURNO","WILLY TONKA","GARGOLA","COLD"], imagenes: ["https://i.postimg.cc/s2Cw1KSK/joseo_nocturno.jpg","https://i.postimg.cc/6QxYTzRH/willy_toinka.jpg","https://i.postimg.cc/d0c4Dndj/gargola.jpg","https://i.postimg.cc/fbQBk5Xq/cold.webp"]},
     {titulo: "VIEWER MÁS PLAGA 🕷️", opciones: ["ENZO","ZEIKO","TINELPRO","NOAH","JOACO"], imagenes: ["https://i.postimg.cc/8zV8Gk7P/enzo_la_maquina.webp","https://i.postimg.cc/3NpKCcsf/16.webp","https://i.postimg.cc/02CywSGM/23.webp","https://i.postimg.cc/mkMbN5vJ/21.webp","https://i.postimg.cc/sQ9CFtyD/1.webp"]},
     {titulo: "MEJOR VIP DEL AÑO 👑", opciones: ["AGUSTÍNCARP","NOAH","UBI","MACCI","LAMINESALADO"], imagenes: ["https://i.postimg.cc/1tH6mrcq/agustin_carp.webp","https://i.postimg.cc/mkMbN5vJ/21.webp","https://i.postimg.cc/Wzr26HBZ/6.png","https://i.postimg.cc/W3xNZvHS/4.webp","https://i.postimg.cc/SxZn5PKg/lamine.webp"]},
-    {titulo: "VIEWER MÁS OG ☠️", opciones: ["TOUZE","FRANPRODS","NICOBARI","LUKITAS","EDAN"], imagenes: ["","https://i.postimg.cc/5yvxqRhp/12.webp","https://i.postimg.cc/Fzc9gBMy/8.png","https://i.postimg.cc/2SfpYj1S/luka.webp","https://i.postimg.cc/NFTg7z3p/14.webp"]},
+    {titulo: "VIEWER MÁS OG ☠️", opciones: ["TOUZE","FRANPRODS","NICOBARI","LUKITAS","EDAN"], imagenes: ["https://i.postimg.cc/PqJ4zCtQ/Picsart_25_12_21_18_03_07_036.png","https://i.postimg.cc/5yvxqRhp/12.webp","https://i.postimg.cc/Fzc9gBMy/8.png","https://i.postimg.cc/2SfpYj1S/luka.webp","https://i.postimg.cc/NFTg7z3p/14.webp"]},
     {titulo: "MEJOR CLIPERO 🎬", opciones: ["CLIPSZETA","MAXITO","BRUNO","MATEAKD","UBI"], imagenes: ["https://i.postimg.cc/RVmQzq7z/zetha.webp","https://i.postimg.cc/brbzHB7H/10.webp","https://i.postimg.cc/XGc6MT3Z/2.webp","https://i.postimg.cc/1X69cjk0/9.webp","https://i.postimg.cc/Wzr26HBZ/6.png"]},
-    {titulo: "MEJOR SETUP 💻", opciones: ["LARA","UBI","GONZITO","PABLITOCLIPS","ZEKKA"], imagenes: ["https://i.postimg.cc/wTkjmN5J/27.webp","https://i.postimg.cc/J4QzkX3G/24.webp","https://i.postimg.cc/tCz4x6dW/28.webp","https://i.postimg.cc/4N1x9cvy/26.webp","https://i.postimg.cc/Kv58MT7z/25.webp"]}
+    {titulo: "MEJOR SETUP 💻", opciones: ["LARA","UBI","GONZITO","PABLITOCLIPS","ZEKKA","MATEAKD"], imagenes: ["https://i.postimg.cc/wTkjmN5J/27.webp","https://i.postimg.cc/J4QzkX3G/24.webp","https://i.postimg.cc/tCz4x6dW/28.webp","https://i.postimg.cc/4N1x9cvy/26.webp","https://i.postimg.cc/Kv58MT7z/25.webp","https://i.postimg.cc/wj02mXd2/IMG_20250815_WA0053.jpg"]}
 ];
 
-// Vincular funciones al objeto global Window para que funcionen los onclick del HTML
+// Cargar Firebase dinámicamente
+function loadFirebase() {
+    const script = document.createElement('script');
+    script.src = 'https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js';
+    script.onload = () => {
+        const script2 = document.createElement('script');
+        script2.src = 'https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js';
+        script2.onload = () => {
+            app = firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore();
+        };
+        document.head.appendChild(script2);
+    };
+    document.head.appendChild(script);
+}
+
+// TODAS LAS FUNCIONES GLOBALES
 window.registrar = function() {
     const nombre = document.getElementById('nombre').value.trim();
     const email = document.getElementById('email').value.trim();
@@ -144,9 +154,11 @@ window.registrar = function() {
     document.getElementById('timestamp').textContent = new Date().toLocaleTimeString();
     document.getElementById('registro').classList.add('hidden');
     document.getElementById('votacion').classList.remove('hidden');
+    document.getElementById('total-ternas').textContent = ternasData.length;
 
     generarTernas();
     mostrarTerna(0);
+    loadFirebase();
 };
 
 function generarTernas() {
@@ -231,15 +243,19 @@ async function finalizar() {
     document.getElementById('completado').classList.remove('hidden');
     document.getElementById('usuario-completado').textContent = usuarioActual.nombre;
 
-    try {
-        await setDoc(doc(db, "votos", usuarioActual.email), {
-            ...usuarioActual,
-            votos,
-            fecha: new Date()
-        });
-        msg("success", "Votos guardados en la nube");
-    } catch (e) {
-        msg("error", "Error al guardar: " + e.message);
+    if (db) {
+        try {
+            await db.collection("votos").doc(usuarioActual.email).set({
+                ...usuarioActual,
+                votos,
+                fecha: new Date()
+            });
+            msg("success", "Votos guardados en la nube");
+        } catch (e) {
+            msg("error", "Error al guardar: " + e.message);
+        }
+    } else {
+        msg("success", "Votación completada (Firebase no disponible)");
     }
 }
 
